@@ -1,16 +1,48 @@
 import React, { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
-interface AuthProps {
-  onLogin: () => void;
-}
-
-export default function Auth({ onLogin }: AuthProps) {
+export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login/register process
-    onLogin();
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name,
+            }
+          }
+        });
+        if (error) throw error;
+        alert('Revisa tu correo para confirmar tu cuenta (si tienes habilitada la confirmación por email en Supabase). Si no, ya puedes iniciar sesión.');
+      }
+    } catch (err: any) {
+      if (err.message === 'Invalid login credentials') {
+        setError('Correo o contraseña incorrectos.');
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,6 +62,12 @@ export default function Auth({ onLogin }: AuthProps) {
           </p>
         </div>
 
+        {error && (
+          <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-sm font-medium mb-6 border border-rose-100 text-center">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
             <div>
@@ -37,6 +75,8 @@ export default function Auth({ onLogin }: AuthProps) {
               <input 
                 type="text" 
                 required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900"
                 placeholder="Ej. Alejandro Pérez"
               />
@@ -48,6 +88,8 @@ export default function Auth({ onLogin }: AuthProps) {
             <input 
               type="email" 
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900"
               placeholder="correo@ejemplo.com"
             />
@@ -58,6 +100,8 @@ export default function Auth({ onLogin }: AuthProps) {
             <input 
               type="password" 
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900"
               placeholder="••••••••"
             />
@@ -65,9 +109,12 @@ export default function Auth({ onLogin }: AuthProps) {
 
           <button 
             type="submit" 
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            disabled={loading}
+            className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
           >
-            {isLogin ? 'Iniciar sesión' : 'Registrarme'}
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : isLogin ? 'Iniciar sesión' : 'Registrarme'}
           </button>
         </form>
 
@@ -75,7 +122,10 @@ export default function Auth({ onLogin }: AuthProps) {
           {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
           <button 
             type="button"
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError(null);
+            }}
             className="ml-1.5 font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
           >
             {isLogin ? 'Regístrate aquí' : 'Inicia sesión'}
