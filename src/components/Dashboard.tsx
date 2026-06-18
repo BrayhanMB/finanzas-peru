@@ -13,7 +13,6 @@ import {
 } from 'recharts';
 import { 
   MessageCircle,
-  TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
   Plus,
@@ -64,6 +63,24 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const [isAllTransactionsModalOpen, setIsAllTransactionsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('¿Estás seguro que deseas eliminar este movimiento?')) return;
+    try {
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) throw error;
+      fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      alert('Hubo un error al eliminar el movimiento.');
+    }
+  };
+
+  const handleEdit = (tx: any) => {
+    setEditingTransaction(tx);
+    setIsModalOpen(true);
+  };
 
   const fetchTransactions = async () => {
     try {
@@ -288,7 +305,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-lg text-slate-900">Últimos Movimientos</h3>
-              {transactions.length > 5 && (
+              {transactions.length > 0 && (
                 <button 
                   onClick={() => setIsAllTransactionsModalOpen(true)}
                   className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 transition-colors"
@@ -307,20 +324,22 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
-                        tx.type === 'expense' ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"
+                        tx.type === 'expense' ? "bg-rose-50 text-rose-600" : 
+                        tx.type === 'income' ? "bg-emerald-50 text-emerald-600" :
+                        "bg-indigo-50 text-indigo-600"
                       )}>
                         {tx.type === 'expense' ? <ArrowDownRight size={20} /> : <ArrowUpRight size={20} />}
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900">{tx.category}</p>
-                        <p className="text-sm text-slate-500">{tx.description} • {new Date(tx.created_at).toLocaleDateString()}</p>
+                        <p className="text-sm text-slate-500 truncate max-w-[150px] sm:max-w-[250px]">{tx.description} • {new Date(tx.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <span className={cn(
                       "font-bold",
                       tx.type === 'expense' ? "text-slate-900" : "text-emerald-600"
                     )}>
-                      {tx.type === 'expense' ? '-' : '+'}{formatCurrency(tx.amount)}
+                      {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : '+'}{formatCurrency(tx.amount)}
                     </span>
                   </div>
                 ))
@@ -389,14 +408,26 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
         userMetadata={userMetadata}
         onSuccess={() => {
           setIsSettingsOpen(false);
-          window.location.reload(); // Recargar para obtener datos frescos del session
+          window.location.reload();
         }}
       />
 
-      <AllTransactionsModal 
-        isOpen={isAllTransactionsModalOpen} 
-        onClose={() => setIsAllTransactionsModalOpen(false)} 
+      <TransactionModal 
+        isOpen={isModalOpen} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTransaction(null);
+        }}
+        onSuccess={fetchTransactions}
+        initialData={editingTransaction}
+      />
+      
+      <AllTransactionsModal
+        isOpen={isAllTransactionsModalOpen}
+        onClose={() => setIsAllTransactionsModalOpen(false)}
         transactions={transactions}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
     </div>
   );

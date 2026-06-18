@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { X, ArrowDownRight, ArrowUpRight, Loader2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -12,6 +12,7 @@ interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialData?: any;
 }
 
 const EXPENSE_CATEGORIES = [
@@ -32,12 +33,26 @@ const EXPENSE_CATEGORIES = [
 ];
 const INCOME_CATEGORIES = ['Sueldo', 'Negocio', 'Inversiones', 'Otros', 'Préstamo a mi favor'];
 
-export default function TransactionModal({ isOpen, onClose, onSuccess }: TransactionModalProps) {
+export default function TransactionModal({ isOpen, onClose, onSuccess, initialData }: TransactionModalProps) {
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setType(initialData.type);
+      setAmount(initialData.amount.toString());
+      setCategory(initialData.category);
+      setDescription(initialData.description || '');
+    } else {
+      setType('expense');
+      setAmount('');
+      setCategory(EXPENSE_CATEGORIES[0]);
+      setDescription('');
+    }
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
@@ -57,19 +72,29 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
       
       if (!user) throw new Error('No usuario autenticado');
 
-      const { error } = await supabase.from('transactions').insert({
-        user_id: user.id,
+      const payload = {
         type: type,
         amount: Number(amount),
         category: category,
         description: description || null,
-      });
+      };
+
+      let error;
+      if (initialData) {
+        const { error: updateError } = await supabase
+          .from('transactions')
+          .update(payload)
+          .eq('id', initialData.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('transactions')
+          .insert({ ...payload, user_id: user.id });
+        error = insertError;
+      }
 
       if (error) throw error;
       
-      // Reset form
-      setAmount('');
-      setDescription('');
       onSuccess();
       onClose();
     } catch (err) {
@@ -99,7 +124,9 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
           <X size={24} />
         </button>
 
-        <h2 className="text-2xl font-bold text-slate-900 mb-8">Nuevo Movimiento</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-8">
+          {initialData ? 'Editar Movimiento' : 'Nuevo Movimiento'}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
@@ -183,7 +210,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
             {loading ? (
               <Loader2 className="animate-spin" size={20} />
             ) : (
-              'Guardar Movimiento'
+              initialData ? 'Actualizar Movimiento' : 'Guardar Movimiento'
             )}
           </button>
         </form>
