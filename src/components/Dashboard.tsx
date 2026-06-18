@@ -1,4 +1,6 @@
-
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import TransactionModal from './TransactionModal';
 import { 
   PieChart, 
   Pie, 
@@ -8,15 +10,15 @@ import {
 } from 'recharts';
 import { 
   LogOut, 
-  MessageCircle, 
-  Coffee, 
-  Car, 
-  Zap, 
-  ShoppingBag, 
-  Wallet,
+  MessageCircle,
+  Coffee,
+  Car,
+  Zap,
+  ShoppingBag,
+  TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  TrendingUp
+  Plus
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -26,25 +28,11 @@ function cn(...inputs: ClassValue[]) {
 }
 
 // Mock Data
-const balance = 1250.00;
-const income = 4500.00;
-const expenses = 3250.00;
-const savingsGoal = 5000.00;
-const currentSavings = 1250.00;
-
 const expensesByCategory = [
   { name: 'Comida', value: 1200, color: '#10b981', icon: Coffee }, // Emerald 500
   { name: 'Transporte', value: 450, color: '#f43f5e', icon: Car }, // Rose 500
   { name: 'Servicios', value: 600, color: '#8b5cf6', icon: Zap }, // Violet 500
   { name: 'Supermercado', value: 1000, color: '#0ea5e9', icon: ShoppingBag }, // Sky 500
-];
-
-const transactions = [
-  { id: 1, name: 'Uber a la oficina', category: 'Transporte', date: 'Hoy, 08:30 AM', amount: -25.50, color: '#f43f5e', icon: Car },
-  { id: 2, name: 'Wong - Compras de la semana', category: 'Supermercado', date: 'Ayer, 18:45 PM', amount: -345.20, color: '#0ea5e9', icon: ShoppingBag },
-  { id: 3, name: 'Sueldo Quincena', category: 'Ingreso', date: '15 Jun, 10:00 AM', amount: 2250.00, color: '#10b981', icon: Wallet },
-  { id: 4, name: 'Luz del Sur', category: 'Servicios', date: '14 Jun, 09:15 AM', amount: -180.00, color: '#8b5cf6', icon: Zap },
-  { id: 5, name: 'Starbucks', category: 'Comida', date: '13 Jun, 16:20 PM', amount: -18.50, color: '#10b981', icon: Coffee },
 ];
 
 const formatCurrency = (amount: number) => {
@@ -55,10 +43,55 @@ const formatCurrency = (amount: number) => {
 };
 
 interface DashboardProps {
+  userName: string;
+  userMetadata?: any;
   onLogout: () => void;
 }
 
-export default function Dashboard({ onLogout }: DashboardProps) {
+export default function Dashboard({ userName, userMetadata, onLogout }: DashboardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
+
+  const fetchTransactions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  // Calculate real totals
+  const initialBalance = userMetadata?.initial_balance || 0;
+  
+  const realIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    
+  const realExpenses = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    
+  const balance = initialBalance + realIncome - realExpenses;
+  const currentSavings = balance; // Using available balance as current savings for now
+  
+  const income = realIncome;
+  const expenses = realExpenses;
+  const savingsGoal = userMetadata?.savings_goal || 5000.00;
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-28">
       {/* Header */}
@@ -71,7 +104,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <h1 className="font-bold text-xl text-slate-900 tracking-tight">Finanzas</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-slate-500 text-sm hidden sm:inline-block font-medium">Hola, Alejandro</span>
+            <span className="text-slate-500 text-sm hidden sm:inline-block font-medium">Hola, {userName.split(' ')[0]}</span>
             <button 
               onClick={onLogout}
               className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
@@ -190,29 +223,33 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <button className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 transition-colors">Ver todos</button>
             </div>
             
-            <div className="space-y-5">
-              {transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between group cursor-default">
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="w-11 h-11 rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100 transition-all group-hover:scale-105"
-                      style={{ backgroundColor: `${tx.color}15`, color: tx.color }}
-                    >
-                      <tx.icon size={20} strokeWidth={2.5} />
+            <div className="space-y-4">
+              {transactions.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">Aún no hay movimientos registrados.</p>
+              ) : (
+                transactions.map((tx) => (
+                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center",
+                        tx.type === 'expense' ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"
+                      )}>
+                        {tx.type === 'expense' ? <ArrowDownRight size={20} /> : <ArrowUpRight size={20} />}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">{tx.category}</p>
+                        <p className="text-sm text-slate-500">{tx.description} • {new Date(tx.created_at).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-slate-900 text-sm">{tx.name}</p>
-                      <p className="text-slate-400 text-xs mt-0.5">{tx.date}</p>
-                    </div>
+                    <span className={cn(
+                      "font-bold",
+                      tx.type === 'expense' ? "text-slate-900" : "text-emerald-600"
+                    )}>
+                      {tx.type === 'expense' ? '-' : '+'}{formatCurrency(tx.amount)}
+                    </span>
                   </div>
-                  <div className={cn(
-                    "font-bold text-sm tracking-tight",
-                    tx.amount > 0 ? "text-emerald-600" : "text-slate-900"
-                  )}>
-                    {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount)}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
         </div>
@@ -225,6 +262,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           Registrar nuevo gasto en WhatsApp
         </button>
       </div>
+
+      {/* Floating Web Transaction Button */}
+      <button 
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-6 right-6 z-20 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+      >
+        <Plus size={24} strokeWidth={2.5} />
+      </button>
+
+      <TransactionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={() => {
+          setIsModalOpen(false);
+          fetchTransactions();
+        }}
+      />
     </div>
   );
 }

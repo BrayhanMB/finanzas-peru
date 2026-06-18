@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
+import Onboarding from './components/Onboarding';
 import { supabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
@@ -8,11 +9,14 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    fetchSession();
 
     const {
       data: { subscription },
@@ -35,5 +39,17 @@ export default function App() {
     return <Auth />;
   }
 
-  return <Dashboard onLogout={() => supabase.auth.signOut()} />;
+  const userName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuario';
+  const hasCompletedOnboarding = session.user.user_metadata?.onboarding_completed;
+
+  if (!hasCompletedOnboarding) {
+    return (
+      <Onboarding 
+        userName={userName.split(' ')[0]} 
+        onComplete={() => fetchSession()} 
+      />
+    );
+  }
+
+  return <Dashboard userName={userName} userMetadata={session.user.user_metadata} onLogout={() => supabase.auth.signOut()} />;
 }
