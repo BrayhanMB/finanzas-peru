@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import TransactionModal from './TransactionModal';
 import Sidebar, { type TabType } from './Sidebar';
 import SettingsModal from './SettingsModal';
+import AllTransactionsModal from './AllTransactionsModal';
 import { 
   PieChart, 
   Pie, 
@@ -60,6 +61,7 @@ interface DashboardProps {
 export default function Dashboard({ userName, userMetadata, onLogout }: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAllTransactionsModalOpen, setIsAllTransactionsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [transactions, setTransactions] = useState<any[]>([]);
 
@@ -85,14 +87,14 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
     fetchTransactions();
   }, []);
 
-  // Calculate real totals
+  // Calculate real totals for global balance
   const initialBalance = userMetadata?.initial_balance || 0;
   
-  const realIncome = transactions
+  const totalIncome = transactions
     .filter(t => t.type === 'income')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
     
-  const realExpenses = transactions
+  const totalExpenses = transactions
     .filter(t => t.type === 'expense')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
 
@@ -104,11 +106,28 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
     .filter(t => t.type === 'savings_withdrawal')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
     
-  const balance = initialBalance + realIncome - realExpenses - savingsDeposits + savingsWithdrawals;
+  const balance = initialBalance + totalIncome - totalExpenses - savingsDeposits + savingsWithdrawals;
   const currentSavings = savingsDeposits - savingsWithdrawals;
+
+  // Calculate THIS MONTH'S totals for the cards
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  const currentMonthTransactions = transactions.filter(t => {
+    const date = new Date(t.created_at);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+
+  const monthlyIncome = currentMonthTransactions
+    .filter(t => t.type === 'income')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+  const monthlyExpenses = currentMonthTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
   
-  const income = realIncome;
-  const expenses = realExpenses;
+  const income = monthlyIncome;
+  const expenses = monthlyExpenses;
   const savingsGoal = userMetadata?.savings_goal || 5000.00;
 
   // Generate dynamic chart data
@@ -273,14 +292,21 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-lg text-slate-900">Últimos Movimientos</h3>
-              <button className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 transition-colors">Ver todos</button>
+              {transactions.length > 5 && (
+                <button 
+                  onClick={() => setIsAllTransactionsModalOpen(true)}
+                  className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 transition-colors"
+                >
+                  Ver todos
+                </button>
+              )}
             </div>
             
             <div className="space-y-4">
               {transactions.length === 0 ? (
                 <p className="text-center text-slate-500 py-8">Aún no hay movimientos registrados.</p>
               ) : (
-                transactions.map((tx) => (
+                transactions.slice(0, 5).map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={cn(
@@ -364,6 +390,12 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           setIsSettingsOpen(false);
           window.location.reload(); // Recargar para obtener datos frescos del session
         }}
+      />
+
+      <AllTransactionsModal 
+        isOpen={isAllTransactionsModalOpen} 
+        onClose={() => setIsAllTransactionsModalOpen(false)} 
+        transactions={transactions}
       />
     </div>
   );
