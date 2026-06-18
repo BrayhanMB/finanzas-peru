@@ -16,7 +16,7 @@ const CATEGORIES = [
   'Alquiler', 'Servicios del Hogar', 'Internet y Celular', 'Suscripciones',
   'Mercado', 'Gustos / Antojos', 'Transporte', 'Cuidado personal',
   'Salud', 'Entretenimiento / Salidas', 'Pago de deuda', 'Mascotas',
-  'Imprevistos', 'Otros', 'Sueldo', 'Negocio', 'Inversiones', 'Ahorro'
+  'Imprevistos', 'Otros', 'Sueldo', 'Negocio', 'Inversiones', 'Ahorro', 'Préstamo a mi favor'
 ];
 
 async function sendWhatsAppMessage(to: string, text: string) {

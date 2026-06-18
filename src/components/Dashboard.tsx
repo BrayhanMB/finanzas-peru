@@ -119,7 +119,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   });
 
   const monthlyIncome = currentMonthTransactions
-    .filter(t => t.type === 'income')
+    .filter(t => t.type === 'income' && t.category !== 'Préstamo a mi favor')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
 
   const monthlyExpenses = currentMonthTransactions

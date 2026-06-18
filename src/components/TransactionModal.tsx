@@ -30,7 +30,7 @@ const EXPENSE_CATEGORIES = [
   'Imprevistos',
   'Otros'
 ];
-const INCOME_CATEGORIES = ['Sueldo', 'Negocio', 'Inversiones', 'Otros'];
+const INCOME_CATEGORIES = ['Sueldo', 'Negocio', 'Inversiones', 'Otros', 'Préstamo a mi favor'];
 
 export default function TransactionModal({ isOpen, onClose, onSuccess }: TransactionModalProps) {
   const [type, setType] = useState<'expense' | 'income'>('expense');
