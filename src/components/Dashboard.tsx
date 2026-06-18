@@ -355,21 +355,26 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           </div>
         )}
 
-        {/* Floating CTA */}
-        <div className="fixed bottom-24 md:bottom-6 left-1/2 md:left-[calc(50%+8rem)] -translate-x-1/2 z-20 w-full max-w-[90%] sm:max-w-max pointer-events-none">
-          <button className="pointer-events-auto w-full sm:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-4 rounded-full shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 font-semibold text-[15px]">
-            <MessageCircle size={22} className="fill-white/20" strokeWidth={2.5} />
-            Registrar nuevo gasto en WhatsApp
+        {/* Floating Action Buttons */}
+        <div className="fixed bottom-24 md:bottom-6 right-6 z-20 flex gap-4">
+          <a 
+            href="https://wa.me/51924245759"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-14 h-14 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-full shadow-lg shadow-[#25D366]/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+            title="Registrar en WhatsApp"
+          >
+            <MessageCircle size={26} className="fill-white/20" strokeWidth={2.5} />
+          </a>
+
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+            title="Nuevo movimiento manual"
+          >
+            <Plus size={24} strokeWidth={2.5} />
           </button>
         </div>
-
-        {/* Floating Web Transaction Button */}
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-24 md:bottom-6 right-6 z-20 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
 
       </div>
 
