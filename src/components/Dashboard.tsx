@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import TransactionModal from './TransactionModal';
-import Sidebar, { TabType } from './Sidebar';
+import Sidebar, { type TabType } from './Sidebar';
 import SettingsModal from './SettingsModal';
 import { 
   PieChart, 
@@ -11,16 +11,13 @@ import {
   Tooltip 
 } from 'recharts';
 import { 
-  LogOut, 
   MessageCircle,
-  Coffee,
-  Car,
-  Zap,
-  ShoppingBag,
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  Plus
+  Plus,
+  PieChart as PieChartIcon,
+  Bell
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -29,13 +26,23 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Mock Data
-const expensesByCategory = [
-  { name: 'Comida', value: 1200, color: '#10b981', icon: Coffee }, // Emerald 500
-  { name: 'Transporte', value: 450, color: '#f43f5e', icon: Car }, // Rose 500
-  { name: 'Servicios', value: 600, color: '#8b5cf6', icon: Zap }, // Violet 500
-  { name: 'Supermercado', value: 1000, color: '#0ea5e9', icon: ShoppingBag }, // Sky 500
-];
+// Colors for categories
+const CATEGORY_COLORS: Record<string, string> = {
+  'Alquiler': '#8b5cf6', // Violet
+  'Servicios del Hogar': '#0ea5e9', // Sky
+  'Internet y Celular': '#3b82f6', // Blue
+  'Suscripciones': '#ec4899', // Pink
+  'Mercado': '#10b981', // Emerald
+  'Gustos / Antojos': '#f59e0b', // Amber
+  'Transporte': '#f43f5e', // Rose
+  'Cuidado personal': '#14b8a6', // Teal
+  'Salud': '#ef4444', // Red
+  'Entretenimiento / Salidas': '#8b5cf6', // Violet
+  'Pago de deuda': '#64748b', // Slate
+  'Mascotas': '#f97316', // Orange
+  'Imprevistos': '#ef4444', // Red
+  'Otros': '#94a3b8', // Slate light
+};
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-PE', {
@@ -88,13 +95,39 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const realExpenses = transactions
     .filter(t => t.type === 'expense')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+  const savingsDeposits = transactions
+    .filter(t => t.type === 'savings_deposit')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+  const savingsWithdrawals = transactions
+    .filter(t => t.type === 'savings_withdrawal')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
     
-  const balance = initialBalance + realIncome - realExpenses;
-  const currentSavings = balance; // Using available balance as current savings for now
+  const balance = initialBalance + realIncome - realExpenses - savingsDeposits + savingsWithdrawals;
+  const currentSavings = savingsDeposits - savingsWithdrawals;
   
   const income = realIncome;
   const expenses = realExpenses;
   const savingsGoal = userMetadata?.savings_goal || 5000.00;
+
+  // Generate dynamic chart data
+  const expenseTransactions = transactions.filter(t => t.type === 'expense');
+  const dynamicExpensesByCategory = expenseTransactions.reduce((acc: any[], curr) => {
+    const existingCategory = acc.find(c => c.name === curr.category);
+    if (existingCategory) {
+      existingCategory.value += Number(curr.amount);
+    } else {
+      acc.push({
+        name: curr.category,
+        value: Number(curr.amount),
+        color: CATEGORY_COLORS[curr.category] || '#6366f1' // Default Indigo
+      });
+    }
+    return acc;
+  }, []).sort((a, b) => b.value - a.value); // Sort by highest expense
+
+  const hasExpenses = dynamicExpensesByCategory.length > 0;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex">
@@ -189,23 +222,25 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={expensesByCategory}
+                    data={hasExpenses ? dynamicExpensesByCategory : [{ name: 'Sin gastos', value: 1, color: '#f1f5f9' }]}
                     cx="50%"
                     cy="50%"
                     innerRadius={70}
                     outerRadius={95}
-                    paddingAngle={5}
+                    paddingAngle={hasExpenses ? 5 : 0}
                     dataKey="value"
                     stroke="none"
                   >
-                    {expensesByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} className="transition-all duration-300 hover:opacity-80" />
+                    {(hasExpenses ? dynamicExpensesByCategory : [{ color: '#f1f5f9' }]).map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} className={hasExpenses ? "transition-all duration-300 hover:opacity-80" : ""} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value: any) => formatCurrency(Number(value))}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                  />
+                  {hasExpenses && (
+                    <Tooltip 
+                      formatter={(value: any) => formatCurrency(Number(value))}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                    />
+                  )}
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -213,16 +248,23 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                 <span className="text-xl font-bold text-slate-900">{formatCurrency(expenses)}</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-6">
-              {expensesByCategory.map((cat, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: cat.color }}></div>
-                    <span className="text-sm text-slate-600 font-medium">{cat.name}</span>
+            
+            {hasExpenses ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-6">
+                {dynamicExpensesByCategory.map((cat: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: cat.color }}></div>
+                      <span className="text-sm text-slate-600 font-medium">{cat.name}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 text-center text-slate-500 text-sm font-medium">
+                Aún no has registrado ningún gasto.
+              </div>
+            )}
           </section>
 
           {/* Transactions Section */}
@@ -268,7 +310,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
         {activeTab === 'reportes' && (
           <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 text-center">
             <div className="w-20 h-20 bg-indigo-100 text-indigo-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
-              <PieChart size={40} strokeWidth={2} />
+              <PieChartIcon size={40} strokeWidth={2} />
             </div>
             <h2 className="text-3xl font-bold text-slate-900 mb-3">Reportes Avanzados</h2>
             <p className="text-slate-500 text-lg">Estamos preparando gráficas detalladas de tus hábitos financieros. ¡Próximamente!</p>
