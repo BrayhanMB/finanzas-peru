@@ -194,9 +194,11 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           </div>
 
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-500 font-medium text-sm">Meta de ahorro</p>
-              <span className="text-indigo-600 font-bold text-sm">25%</span>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-500 font-medium text-sm sm:text-base">Meta de ahorro</h3>
+              <span className="text-indigo-600 font-bold text-sm">
+                {Math.min(100, Math.round((currentSavings / savingsGoal) * 100))}%
+              </span>
             </div>
             <div className="mt-1">
               <div className="flex justify-between text-xs font-medium text-slate-400 mb-2">
