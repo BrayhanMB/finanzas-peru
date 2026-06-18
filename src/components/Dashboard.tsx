@@ -184,10 +184,6 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           <h2 className="text-5xl sm:text-6xl font-extrabold text-slate-900 tracking-tight">
             {formatCurrency(balance)}
           </h2>
-          <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-semibold">
-            <TrendingUp size={16} />
-            <span>+12.5% este mes</span>
-          </div>
         </section>
 
         {/* Summary Grid */}
