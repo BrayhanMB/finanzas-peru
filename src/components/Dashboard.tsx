@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import TransactionModal from './TransactionModal';
+import Sidebar, { TabType } from './Sidebar';
+import SettingsModal from './SettingsModal';
 import { 
   PieChart, 
   Pie, 
@@ -50,6 +52,8 @@ interface DashboardProps {
 
 export default function Dashboard({ userName, userMetadata, onLogout }: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [transactions, setTransactions] = useState<any[]>([]);
 
   const fetchTransactions = async () => {
@@ -93,29 +97,34 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const savingsGoal = userMetadata?.savings_goal || 5000.00;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-28">
-      {/* Header */}
-      <header className="bg-white px-6 py-4 shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 font-sans flex">
+      {/* Sidebar Navigation */}
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onLogout={onLogout}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 md:ml-64 pb-28 md:pb-10 min-w-0">
+        
+        {/* Header solo en mobile ya que el sidebar desktop ya tiene logo */}
+        <header className="bg-white px-6 py-4 shadow-sm sticky top-0 z-10 md:hidden">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-sky-300 flex items-center justify-center shadow-sm">
               <span className="text-xl leading-none">🐧</span>
             </div>
             <h1 className="font-bold text-xl text-slate-900 tracking-tight">Finanzas</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-500 text-sm hidden sm:inline-block font-medium">Hola, {userName.split(' ')[0]}</span>
-            <button 
-              onClick={onLogout}
-              className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
-            >
-              <LogOut size={20} strokeWidth={2.5} />
-            </button>
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 mt-8 space-y-6">
+        {activeTab === 'dashboard' && (
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 mt-8 space-y-6">
+            <div className="mb-2">
+              <h2 className="text-2xl font-bold text-slate-900">Hola, {userName.split(' ')[0]} 👋</h2>
+              <p className="text-slate-500">Aquí está el resumen de tus finanzas.</p>
+            </div>
         {/* Balance Hero Card */}
         <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex flex-col items-center justify-center relative overflow-hidden transition-all hover:shadow-md">
           <div className="absolute top-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500"></div>
@@ -253,23 +262,46 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             </div>
           </section>
         </div>
-      </main>
+          </main>
+        )}
 
-      {/* Floating CTA */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-[90%] sm:max-w-max pointer-events-none">
-        <button className="pointer-events-auto w-full sm:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-4 rounded-full shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 font-semibold text-[15px]">
-          <MessageCircle size={22} className="fill-white/20" strokeWidth={2.5} />
-          Registrar nuevo gasto en WhatsApp
+        {activeTab === 'reportes' && (
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 text-center">
+            <div className="w-20 h-20 bg-indigo-100 text-indigo-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
+              <PieChart size={40} strokeWidth={2} />
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 mb-3">Reportes Avanzados</h2>
+            <p className="text-slate-500 text-lg">Estamos preparando gráficas detalladas de tus hábitos financieros. ¡Próximamente!</p>
+          </div>
+        )}
+
+        {activeTab === 'alertas' && (
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 text-center">
+            <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
+              <Bell size={40} strokeWidth={2} />
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 mb-3">Centro de Alertas</h2>
+            <p className="text-slate-500 text-lg">Aquí recibirás notificaciones cuando estés cerca de sobrepasar tu presupuesto. ¡Próximamente!</p>
+          </div>
+        )}
+
+        {/* Floating CTA */}
+        <div className="fixed bottom-24 md:bottom-6 left-1/2 md:left-[calc(50%+8rem)] -translate-x-1/2 z-20 w-full max-w-[90%] sm:max-w-max pointer-events-none">
+          <button className="pointer-events-auto w-full sm:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-4 rounded-full shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 font-semibold text-[15px]">
+            <MessageCircle size={22} className="fill-white/20" strokeWidth={2.5} />
+            Registrar nuevo gasto en WhatsApp
+          </button>
+        </div>
+
+        {/* Floating Web Transaction Button */}
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="fixed bottom-24 md:bottom-6 right-6 z-20 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+        >
+          <Plus size={24} strokeWidth={2.5} />
         </button>
-      </div>
 
-      {/* Floating Web Transaction Button */}
-      <button 
-        onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-6 right-6 z-20 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-      >
-        <Plus size={24} strokeWidth={2.5} />
-      </button>
+      </div>
 
       <TransactionModal 
         isOpen={isModalOpen} 
@@ -277,6 +309,16 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
         onSuccess={() => {
           setIsModalOpen(false);
           fetchTransactions();
+        }}
+      />
+
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)}
+        userMetadata={userMetadata}
+        onSuccess={() => {
+          setIsSettingsOpen(false);
+          window.location.reload(); // Recargar para obtener datos frescos del session
         }}
       />
     </div>
