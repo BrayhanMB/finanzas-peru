@@ -59,6 +59,14 @@ export default function Onboarding({ onComplete, userName }: OnboardingProps) {
         ></div>
       </div>
 
+      {/* Logout Button */}
+      <button 
+        onClick={() => supabase.auth.signOut()}
+        className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 font-medium text-sm transition-colors"
+      >
+        Cerrar sesión
+      </button>
+
       <div className="max-w-xl w-full">
         {/* Header */}
         <div className="text-center mb-10 transition-all">
