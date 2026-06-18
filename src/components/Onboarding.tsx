@@ -24,10 +24,16 @@ export default function Onboarding({ onComplete, userName }: OnboardingProps) {
   const handleComplete = async () => {
     setLoading(true);
     try {
+      // Limpiar y formatear el número para que coincida con el formato de Meta API (ej. 51999888777)
+      let cleanPhone = whatsapp.replace(/\D/g, ''); // Quitar todo lo que no sea número (espacios, guiones, +)
+      if (cleanPhone.length === 9) {
+        cleanPhone = '51' + cleanPhone; // Agregar código de Perú si solo pusieron los 9 dígitos
+      }
+
       const { error } = await supabase.auth.updateUser({
         data: {
           onboarding_completed: true,
-          whatsapp_number: whatsapp,
+          whatsapp_number: cleanPhone,
           initial_balance: Number(balance),
           monthly_income: Number(income),
           savings_goal: Number(goal),
