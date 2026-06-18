@@ -131,7 +131,10 @@ export default function Onboarding({ onComplete, userName }: OnboardingProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Ingreso Mensual (S/)</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Ingreso Mensual (S/) <span className="text-slate-400 font-normal ml-1">(Opcional)</span>
+                  </label>
+                  <p className="text-xs text-slate-500 mb-2">Si ganas por destajo o tu ingreso es variable, déjalo en blanco.</p>
                   <input 
                     type="number" 
                     value={income}
@@ -175,7 +178,7 @@ export default function Onboarding({ onComplete, userName }: OnboardingProps) {
                 onClick={handleNext}
                 disabled={
                   (step === 1 && !whatsapp) || 
-                  (step === 2 && (!balance || !income))
+                  (step === 2 && !balance)
                 }
                 className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold py-3.5 px-8 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2"
               >

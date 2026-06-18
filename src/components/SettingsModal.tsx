@@ -94,7 +94,10 @@ export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Ingreso Mensual Fijo (S/)</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">
+              Ingreso Mensual Fijo (S/) <span className="text-slate-400 font-normal ml-1">(Opcional)</span>
+            </label>
+            <p className="text-xs text-slate-500 mb-2">Si ganas por destajo o tu ingreso es variable, déjalo en blanco.</p>
             <input 
               type="number" 
               value={income}
