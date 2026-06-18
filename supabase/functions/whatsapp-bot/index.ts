@@ -120,7 +120,23 @@ serve(async (req) => {
            return new Response('OK', { status: 200 });
         }
 
-        // Si es transacción, guardarla en DB
+        // 4. Validaciones para que el usuario NO quede en negativo
+        if (classification.type === 'savings_deposit' && classification.amount > contextData.available_balance) {
+          await sendWhatsAppMessage(from, `❌ Movimiento denegado.\n\nEstás intentando guardar S/ ${classification.amount} en tu alcancía, pero tu balance disponible es de solo S/ ${contextData.available_balance}. ¡No puedes quedarte en números rojos!`);
+          return new Response('OK', { status: 200 });
+        }
+        
+        if (classification.type === 'savings_withdrawal' && classification.amount > contextData.current_savings) {
+          await sendWhatsAppMessage(from, `❌ Movimiento denegado.\n\nEstás intentando retirar S/ ${classification.amount}, pero tu alcancía solo tiene S/ ${contextData.current_savings}.`);
+          return new Response('OK', { status: 200 });
+        }
+
+        if (classification.type === 'expense' && classification.amount > contextData.available_balance) {
+          await sendWhatsAppMessage(from, `❌ Gasto rechazado.\n\nTu gasto de S/ ${classification.amount} supera tu balance disponible (S/ ${contextData.available_balance}). ¡Cuidado con sobregirarte!`);
+          return new Response('OK', { status: 200 });
+        }
+
+        // 5. Si pasa las validaciones, guardar transacción en DB
         const { error: insertError } = await supabase.from('transactions').insert({
           user_id: contextData.user_id,
           type: classification.type,

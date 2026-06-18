@@ -17,12 +17,18 @@ DECLARE
     
     v_available_balance numeric := 0;
     v_current_savings numeric := 0;
+    
+    v_clean_phone text;
 BEGIN
+    -- Limpiar el teléfono que llega de WhatsApp (quitar signos +, espacios, etc)
+    v_clean_phone := regexp_replace(p_phone, '\D', '', 'g');
+
     -- 1. Encontrar al usuario por su número de WhatsApp
+    -- Buscamos que los últimos 9 dígitos coincidan para ser infalibles con los códigos de país (ej. 51)
     SELECT id, raw_user_meta_data 
     INTO v_user_id, v_metadata
     FROM auth.users
-    WHERE raw_user_meta_data->>'whatsapp_number' = p_phone
+    WHERE regexp_replace(raw_user_meta_data->>'whatsapp_number', '\D', '', 'g') LIKE '%' || RIGHT(v_clean_phone, 9)
     LIMIT 1;
 
     IF v_user_id IS NULL THEN
@@ -48,10 +54,7 @@ BEGIN
     WHERE user_id = v_user_id;
 
     -- 4. Calcular métricas finales
-    -- El dinero disponible baja si mandas al ahorro (deposit), pero sube si retiras del ahorro (withdrawal)
     v_available_balance := v_initial_balance + v_total_income - v_total_expense - v_total_savings_deposit + v_total_savings_withdrawal;
-    
-    -- El ahorro actual es simplemente lo depositado menos lo retirado
     v_current_savings := v_total_savings_deposit - v_total_savings_withdrawal;
 
     -- 5. Retornar un JSON completo para que la Edge Function lo procese
