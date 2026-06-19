@@ -47,9 +47,10 @@ async function sendWhatsAppMessage(to: string, text: string) {
 async function classifyWithGemini(text: string, contextData: any) {
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  const prompt = `Eres un asesor financiero inteligente. Tienes dos tareas:
+  const prompt = `Eres un asesor financiero inteligente y empático. Tienes tres tareas principales:
 1. Si el usuario reporta un movimiento de dinero (gasto, ingreso, guardar ahorro, retirar ahorro), clasifícalo.
 2. Si el usuario te hace una pregunta sobre su estado financiero (ej: "¿cuánto dinero me queda?"), respóndele de forma natural usando su contexto real.
+3. Si el usuario pide un consejo, tips o recomendaciones para llegar a fin de mes, actúa como un experto en finanzas personales. Basándote en su 'Balance Disponible', dale consejos súper prácticos, matemáticos (ej. cuánto gastar por día) y motívalo usando las mejores prácticas de ahorro e inversión.
 
 CONTEXTO FINANCIERO ACTUAL DEL USUARIO:
 - Balance Disponible para gastar HOY: S/ ${contextData.available_balance}
