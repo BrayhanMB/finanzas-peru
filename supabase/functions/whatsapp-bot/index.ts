@@ -113,7 +113,7 @@ serve(async (req) => {
 
         // Interceptor de Bienvenida para usuarios nuevos
         if (text.toLowerCase().includes('nuevo por aquí') || text.toLowerCase().includes('nuevo por aqui')) {
-          await sendWhatsAppMessage(from, "¡Hola! Soy Pingu 🐧, tu asistente financiero. Ya tengo tu cuenta configurada. A partir de ahora, cada vez que gastes, ganes o ahorres dinero, solo cuéntamelo por aquí.\n\n¡Prueba diciéndome *'Me compré un café por 5 soles'*!");
+          await sendWhatsAppMessage(from, "¡Hola! Soy Pingu 🐧, tu asistente financiero. Ya tengo tu cuenta configurada. A partir de ahora, cada vez que gastes, ganes o ahorres dinero, solo cuéntamelo por aquí. ¡Con un mensaje normal, como si hablaras con un amigo 🐧!");
           return new Response('OK', { status: 200 });
         }
 
