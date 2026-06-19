@@ -317,7 +317,24 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             
             <div className="space-y-4">
               {transactions.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">Aún no hay movimientos registrados.</p>
+                <div className="text-center py-10 px-4 bg-slate-50/50 rounded-2xl border border-slate-100 border-dashed">
+                  <div className="w-16 h-16 bg-[#25D366]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <MessageCircle size={32} className="text-[#25D366]" strokeWidth={2} />
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-900 mb-2">¡Rompe el hielo! 🐧</h4>
+                  <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
+                    Tu cuenta está lista. Escríbele a Pingu por WhatsApp para registrar tu primer gasto o ingreso.
+                  </p>
+                  <a 
+                    href="https://wa.me/51924245759?text=¡Hola%20Pingu!%20Soy%20nuevo%20por%20aquí"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-[#25D366]/20 transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <MessageCircle size={20} />
+                    Abrir WhatsApp
+                  </a>
+                </div>
               ) : (
                 transactions.slice(0, 5).map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
@@ -371,16 +388,25 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
         )}
 
         {/* Floating Action Buttons */}
-        <div className="fixed bottom-24 md:bottom-6 right-6 z-20 flex gap-4">
-          <a 
-            href="https://wa.me/51924245759"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-14 h-14 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-full shadow-lg shadow-[#25D366]/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-            title="Registrar en WhatsApp"
-          >
-            <MessageCircle size={26} className="fill-white/20" strokeWidth={2.5} />
-          </a>
+        <div className="fixed bottom-24 md:bottom-6 right-6 z-20 flex flex-col md:flex-row gap-4 items-end md:items-center">
+          
+          <div className="relative group flex items-center">
+            {/* Tooltip (oculto en móviles, visible en hover en desktop) */}
+            <div className="absolute right-full mr-4 px-4 py-2 bg-slate-800 text-white text-xs font-medium rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl hidden md:block">
+              Escríbele a Pingu por WhatsApp e ingresa todo desde ahí
+              <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 border-4 border-transparent border-l-slate-800"></div>
+            </div>
+            
+            <a 
+              href="https://wa.me/51924245759"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-14 h-14 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-full shadow-lg shadow-[#25D366]/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+              title="Registrar en WhatsApp"
+            >
+              <MessageCircle size={26} className="fill-white/20" strokeWidth={2.5} />
+            </a>
+          </div>
 
           <button 
             onClick={() => setIsModalOpen(true)}

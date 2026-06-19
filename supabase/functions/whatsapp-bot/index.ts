@@ -111,6 +111,12 @@ serve(async (req) => {
           return new Response('OK', { status: 200 });
         }
 
+        // Interceptor de Bienvenida para usuarios nuevos
+        if (text.toLowerCase().includes('nuevo por aquí') || text.toLowerCase().includes('nuevo por aqui')) {
+          await sendWhatsAppMessage(from, "¡Hola! Soy Pingu 🐧, tu asistente financiero. Ya tengo tu cuenta configurada. A partir de ahora, cada vez que gastes, ganes o ahorres dinero, solo cuéntamelo por aquí.\n\n¡Prueba diciéndome *'Me compré un café por 5 soles'*!");
+          return new Response('OK', { status: 200 });
+        }
+
         // 2. Llamar a Gemini inyectando el contexto real
         const classification = await classifyWithGemini(text, contextData);
         
