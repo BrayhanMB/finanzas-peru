@@ -26,6 +26,7 @@ export default function Auth() {
           email,
           password,
           options: {
+            emailRedirectTo: window.location.origin,
             data: {
               full_name: name,
             }
@@ -118,17 +119,19 @@ export default function Auth() {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-slate-500">
-          {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
+        <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col items-center gap-4">
+          <p className="text-sm text-slate-500">
+            {isLogin ? '¿Primera vez usando Pingu?' : '¿Ya eres parte de la familia?'}
+          </p>
           <button 
             type="button"
             onClick={() => {
               setIsLogin(!isLogin);
               setError(null);
             }}
-            className="ml-1.5 font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+            className="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-semibold py-3.5 rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-2"
           >
-            {isLogin ? 'Regístrate aquí' : 'Inicia sesión'}
+            {isLogin ? 'Crear una cuenta nueva' : 'Inicia sesión aquí'}
           </button>
         </div>
       </div>
