@@ -5,6 +5,7 @@ import Sidebar, { type TabType } from './Sidebar';
 import SettingsModal from './SettingsModal';
 import AllTransactionsModal from './AllTransactionsModal';
 import Reports from './Reports';
+import Payments from './Payments';
 import { 
   PieChart, 
   Pie, 
@@ -373,6 +374,10 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             onEdit={handleEdit} 
             onDelete={handleDelete} 
           />
+        )}
+
+        {activeTab === 'pagos' && (
+          <Payments />
         )}
 
         {activeTab === 'alertas' && (
