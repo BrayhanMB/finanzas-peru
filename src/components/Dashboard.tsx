@@ -4,6 +4,7 @@ import TransactionModal from './TransactionModal';
 import Sidebar, { type TabType } from './Sidebar';
 import SettingsModal from './SettingsModal';
 import AllTransactionsModal from './AllTransactionsModal';
+import Reports from './Reports';
 import { 
   PieChart, 
   Pie, 
@@ -16,7 +17,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Plus,
-  PieChart as PieChartIcon,
   Bell
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -368,13 +368,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
         )}
 
         {activeTab === 'reportes' && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 text-center">
-            <div className="w-20 h-20 bg-indigo-100 text-indigo-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
-              <PieChartIcon size={40} strokeWidth={2} />
-            </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-3">Reportes Avanzados</h2>
-            <p className="text-slate-500 text-lg">Estamos preparando gráficas detalladas de tus hábitos financieros. ¡Próximamente!</p>
-          </div>
+          <Reports transactions={transactions} />
         )}
 
         {activeTab === 'alertas' && (
