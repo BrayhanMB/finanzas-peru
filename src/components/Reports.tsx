@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import AllTransactionsModal from './AllTransactionsModal';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -19,6 +20,8 @@ interface Transaction {
 
 interface ReportsProps {
   transactions: Transaction[];
+  onEdit: (tx: any) => void;
+  onDelete: (id: string) => void;
 }
 
 const MONTHS = [
@@ -31,10 +34,11 @@ const COLORS = [
   '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6'
 ];
 
-export default function Reports({ transactions }: ReportsProps) {
+export default function Reports({ transactions, onEdit, onDelete }: ReportsProps) {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -235,7 +239,11 @@ export default function Reports({ transactions }: ReportsProps) {
                 <h3 className="text-lg font-bold text-slate-900 mb-6">Detalle de Gastos</h3>
                 <div className="space-y-4">
                   {pieChartData.map((category, index) => (
-                    <div key={category.name} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+                    <button 
+                      key={category.name} 
+                      onClick={() => setSelectedCategory(category.name)}
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors text-left"
+                    >
                       <div className="flex items-center gap-3">
                         <div 
                           className="w-3 h-3 rounded-full" 
@@ -249,7 +257,7 @@ export default function Reports({ transactions }: ReportsProps) {
                           {((category.value / totalExpense) * 100).toFixed(1)}%
                         </span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -261,7 +269,11 @@ export default function Reports({ transactions }: ReportsProps) {
                 <h3 className="text-lg font-bold text-slate-900 mb-6">Fuentes de Ingreso</h3>
                 <div className="space-y-4">
                   {Object.entries(incomeByCategory).sort((a, b) => b[1] - a[1]).map(([name, value]) => (
-                    <div key={name} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+                    <button 
+                      key={name} 
+                      onClick={() => setSelectedCategory(name)}
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors text-left"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                           <TrendingUp size={18} strokeWidth={2.5} />
@@ -269,7 +281,7 @@ export default function Reports({ transactions }: ReportsProps) {
                         <span className="font-medium text-slate-700">{name}</span>
                       </div>
                       <span className="font-bold text-emerald-600 block">S/ {value.toFixed(2)}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -279,6 +291,16 @@ export default function Reports({ transactions }: ReportsProps) {
 
         </div>
       )}
+
+      <AllTransactionsModal 
+        isOpen={selectedCategory !== null}
+        onClose={() => setSelectedCategory(null)}
+        transactions={filteredTransactions.filter(tx => tx.category === selectedCategory)}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        title={`Detalle: ${selectedCategory}`}
+        subtitle={`Movimientos de ${MONTHS[selectedMonth]} ${selectedYear}`}
+      />
 
     </div>
   );

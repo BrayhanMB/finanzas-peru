@@ -13,9 +13,11 @@ interface AllTransactionsModalProps {
   transactions: any[];
   onEdit: (tx: any) => void;
   onDelete: (id: string) => void;
+  title?: string;
+  subtitle?: string;
 }
 
-export default function AllTransactionsModal({ isOpen, onClose, transactions, onEdit, onDelete }: AllTransactionsModalProps) {
+export default function AllTransactionsModal({ isOpen, onClose, transactions, onEdit, onDelete, title, subtitle }: AllTransactionsModalProps) {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -35,8 +37,8 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
       >
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white/50 backdrop-blur-md sticky top-0 z-10">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Todos los Movimientos</h2>
-            <p className="text-sm text-slate-500 mt-1">Historial completo de tus finanzas</p>
+            <h2 className="text-xl font-bold text-slate-900">{title || 'Todos los Movimientos'}</h2>
+            <p className="text-sm text-slate-500 mt-1">{subtitle || 'Historial completo de tus finanzas'}</p>
           </div>
           <button 
             onClick={onClose}

@@ -368,7 +368,11 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
         )}
 
         {activeTab === 'reportes' && (
-          <Reports transactions={transactions} />
+          <Reports 
+            transactions={transactions} 
+            onEdit={handleEdit} 
+            onDelete={handleDelete} 
+          />
         )}
 
         {activeTab === 'alertas' && (
