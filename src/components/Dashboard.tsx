@@ -148,7 +148,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const savingsGoal = userMetadata?.savings_goal || 5000.00;
 
   // Generate dynamic chart data
-  const expenseTransactions = transactions.filter(t => t.type === 'expense');
+  const expenseTransactions = currentMonthTransactions.filter(t => t.type === 'expense');
   const dynamicExpensesByCategory = expenseTransactions.reduce((acc: any[], curr) => {
     const existingCategory = acc.find(c => c.name === curr.category);
     if (existingCategory) {
