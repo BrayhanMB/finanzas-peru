@@ -38,6 +38,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -46,11 +47,23 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
       setAmount(initialData.amount.toString());
       setCategory(initialData.category);
       setDescription(initialData.description || '');
+      
+      const localDate = new Date(initialData.created_at);
+      const yyyy = localDate.getFullYear();
+      const mm = String(localDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(localDate.getDate()).padStart(2, '0');
+      setDate(`${yyyy}-${mm}-${dd}`);
     } else {
       setType('expense');
       setAmount('');
       setCategory(EXPENSE_CATEGORIES[0]);
       setDescription('');
+      
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      setDate(`${yyyy}-${mm}-${dd}`);
     }
   }, [initialData, isOpen]);
 
@@ -72,11 +85,15 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
       
       if (!user) throw new Error('No usuario autenticado');
 
+      const [y, m, d] = date.split('-');
+      const submitDate = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+
       const payload = {
         type: type,
         amount: Number(amount),
         category: category,
         description: description || null,
+        created_at: submitDate.toISOString(),
       };
 
       let error;
@@ -187,6 +204,18 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
+          </div>
+
+          {/* Date */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Fecha</label>
+            <input 
+              type="date" 
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900"
+            />
           </div>
 
           {/* Description */}
