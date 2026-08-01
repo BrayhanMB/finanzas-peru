@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowDownRight, ArrowUpRight, PiggyBank, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -15,9 +16,10 @@ interface AllTransactionsModalProps {
   onDelete: (id: string) => void;
   title?: string;
   subtitle?: string;
+  showWeeklyChart?: boolean;
 }
 
-export default function AllTransactionsModal({ isOpen, onClose, transactions, onEdit, onDelete, title, subtitle }: AllTransactionsModalProps) {
+export default function AllTransactionsModal({ isOpen, onClose, transactions, onEdit, onDelete, title, subtitle, showWeeklyChart }: AllTransactionsModalProps) {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -29,10 +31,35 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
     }).format(amount).replace('PEN', 'S/');
   };
 
+  const weeklyData = () => {
+    const weeks = [
+      { name: 'Semana 1', value: 0 },
+      { name: 'Semana 2', value: 0 },
+      { name: 'Semana 3', value: 0 },
+      { name: 'Semana 4', value: 0 },
+    ];
+    
+    transactions.forEach(tx => {
+      const date = new Date(tx.created_at);
+      const day = date.getDate();
+      const amount = Number(tx.amount);
+      
+      if (day <= 7) weeks[0].value += amount;
+      else if (day <= 14) weeks[1].value += amount;
+      else if (day <= 21) weeks[2].value += amount;
+      else weeks[3].value += amount;
+    });
+    
+    return weeks;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+        className={cn(
+          "bg-white rounded-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200",
+          showWeeklyChart ? "max-w-5xl" : "max-w-2xl"
+        )}
         onClick={(e) => { e.stopPropagation(); setActiveDropdownId(null); }}
       >
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white/50 backdrop-blur-md sticky top-0 z-10">
@@ -48,7 +75,11 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto custom-scrollbar relative">
+        <div className={cn(
+          "p-6 overflow-y-auto custom-scrollbar relative",
+          showWeeklyChart ? "grid grid-cols-1 lg:grid-cols-2 gap-8" : ""
+        )}>
+          {/* Left: Transaction list */}
           <div className="space-y-3">
             {transactions.length === 0 ? (
               <p className="text-center text-slate-500 py-12">Aún no hay movimientos registrados.</p>
@@ -111,6 +142,29 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
               ))
             )}
           </div>
+
+          {/* Right: Chart */}
+          {showWeeklyChart && (
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col mt-6 lg:mt-0">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Desglose Semanal</h3>
+              <div className="flex-1 w-full min-h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyData()} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(val) => `S/${val}`} />
+                    <RechartsTooltip 
+                      cursor={{ fill: 'transparent' }}
+                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                      formatter={(value: any) => [`S/ ${Number(value).toFixed(2)}`, 'Total']}
+                    />
+                    <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={60} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>

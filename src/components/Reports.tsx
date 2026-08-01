@@ -307,6 +307,7 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
         onDelete={onDelete}
         title={`Detalle: ${selectedCategory}`}
         subtitle={`Movimientos de ${MONTHS[selectedMonth]} ${selectedYear}`}
+        showWeeklyChart={true}
       />
 
     </div>
