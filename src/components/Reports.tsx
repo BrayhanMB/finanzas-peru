@@ -39,6 +39,7 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategoryType, setSelectedCategoryType] = useState<'income' | 'expense' | null>(null);
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -241,7 +242,7 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
                   {pieChartData.map((category, index) => (
                     <button 
                       key={category.name} 
-                      onClick={() => setSelectedCategory(category.name)}
+                      onClick={() => { setSelectedCategory(category.name); setSelectedCategoryType('expense'); }}
                       className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
@@ -271,7 +272,7 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
                   {Object.entries(incomeByCategory).sort((a, b) => b[1] - a[1]).map(([name, value]) => (
                     <button 
                       key={name} 
-                      onClick={() => setSelectedCategory(name)}
+                      onClick={() => { setSelectedCategory(name); setSelectedCategoryType('income'); }}
                       className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
@@ -294,8 +295,14 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
 
       <AllTransactionsModal 
         isOpen={selectedCategory !== null}
-        onClose={() => setSelectedCategory(null)}
-        transactions={filteredTransactions.filter(tx => tx.category === selectedCategory)}
+        onClose={() => { setSelectedCategory(null); setSelectedCategoryType(null); }}
+        transactions={filteredTransactions.filter(tx => {
+          if (tx.category !== selectedCategory) return false;
+          if (selectedCategoryType === 'income') {
+            return tx.type === 'income' || tx.type === 'savings_withdrawal' || tx.category === 'Préstamo a mi favor';
+          }
+          return (tx.type === 'expense' || tx.type === 'savings_deposit') && tx.category !== 'Préstamo a mi favor';
+        })}
         onEdit={onEdit}
         onDelete={onDelete}
         title={`Detalle: ${selectedCategory}`}
