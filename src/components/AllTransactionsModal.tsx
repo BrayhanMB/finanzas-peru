@@ -145,7 +145,7 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
 
           {/* Right: Chart */}
           {showWeeklyChart && (
-            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col mt-6 lg:mt-0">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col mt-6 lg:mt-0 lg:sticky lg:top-0 h-[380px]">
               <h3 className="text-lg font-bold text-slate-900 mb-6">Desglose Semanal</h3>
               <div className="flex-1 w-full min-h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
