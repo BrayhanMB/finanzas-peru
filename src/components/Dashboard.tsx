@@ -18,7 +18,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Plus,
-  Bell
+  Bell,
+  Scale,
+  PiggyBank
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -123,8 +125,11 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const savingsWithdrawals = transactions
     .filter(t => t.type === 'savings_withdrawal')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const balanceAdjustments = transactions
+    .filter(t => t.type === 'balance_adjustment')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
     
-  const balance = initialBalance + totalIncome - totalExpenses - savingsDeposits + savingsWithdrawals;
+  const balance = initialBalance + totalIncome - totalExpenses - savingsDeposits + savingsWithdrawals + balanceAdjustments;
   const currentSavings = savingsDeposits - savingsWithdrawals;
 
   // Calculate THIS MONTH'S totals for the cards
@@ -344,21 +349,38 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                         "w-10 h-10 rounded-full flex items-center justify-center",
                         tx.type === 'expense' ? "bg-rose-50 text-rose-600" : 
                         tx.type === 'income' ? "bg-emerald-50 text-emerald-600" :
+                        tx.type === 'balance_adjustment' ? "bg-slate-100 text-slate-700" :
                         "bg-indigo-50 text-indigo-600"
                       )}>
-                        {tx.type === 'expense' ? <ArrowDownRight size={20} /> : <ArrowUpRight size={20} />}
+                        {tx.type === 'expense' ? <ArrowDownRight size={20} /> : 
+                         tx.type === 'income' ? <ArrowUpRight size={20} /> :
+                         tx.type === 'balance_adjustment' ? <Scale size={20} /> :
+                         <PiggyBank size={20} />}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">{tx.category}</p>
-                        <p className="text-sm text-slate-500 truncate max-w-[150px] sm:max-w-[250px]">{tx.description} • {new Date(tx.created_at).toLocaleDateString()}</p>
+                        <p className="font-bold text-slate-900">{tx.category}</p>
+                        <p className="text-sm text-slate-500 truncate max-w-[150px] sm:max-w-[200px]">
+                          {tx.description}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {new Date(tx.created_at).toLocaleDateString('es-PE', { 
+                            year: 'numeric', month: 'short', day: 'numeric' 
+                          })}
+                        </p>
                       </div>
                     </div>
-                    <span className={cn(
-                      "font-bold",
-                      tx.type === 'expense' ? "text-slate-900" : "text-emerald-600"
-                    )}>
-                      {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : '+'}{formatCurrency(tx.amount)}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={cn(
+                        "font-bold text-lg",
+                        tx.type === 'expense' ? "text-slate-900" : 
+                        tx.type === 'income' ? "text-emerald-600" :
+                        tx.type === 'balance_adjustment' ? "text-slate-500" :
+                        "text-indigo-600"
+                      )}>
+                        {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : 
+                         tx.type === 'balance_adjustment' ? (tx.amount > 0 ? '+' : '') : '+'}{tx.type === 'balance_adjustment' ? formatCurrency(Math.abs(tx.amount)) : formatCurrency(tx.amount)}
+                      </span>
+                    </div>
                   </div>
                 ))
               )}

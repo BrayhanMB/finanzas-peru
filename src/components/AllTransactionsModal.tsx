@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, ArrowDownRight, ArrowUpRight, PiggyBank, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { X, ArrowDownRight, ArrowUpRight, PiggyBank, MoreVertical, Edit2, Trash2, Scale } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -91,10 +91,12 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
                       "w-12 h-12 rounded-full flex items-center justify-center shrink-0",
                       tx.type === 'expense' ? "bg-rose-50 text-rose-600" : 
                       tx.type === 'income' ? "bg-emerald-50 text-emerald-600" :
+                      tx.type === 'balance_adjustment' ? "bg-slate-100 text-slate-700" :
                       "bg-indigo-50 text-indigo-600"
                     )}>
                       {tx.type === 'expense' ? <ArrowDownRight size={20} /> : 
                        tx.type === 'income' ? <ArrowUpRight size={20} /> :
+                       tx.type === 'balance_adjustment' ? <Scale size={20} /> :
                        <PiggyBank size={20} />}
                     </div>
                     <div>
@@ -115,9 +117,11 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
                       "font-bold text-lg",
                       tx.type === 'expense' ? "text-slate-900" : 
                       tx.type === 'income' ? "text-emerald-600" :
+                      tx.type === 'balance_adjustment' ? "text-slate-500" :
                       "text-indigo-600"
                     )}>
-                      {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : '+'}{formatCurrency(tx.amount)}
+                      {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : 
+                       tx.type === 'balance_adjustment' ? (tx.amount > 0 ? '+' : '') : '+'}{tx.type === 'balance_adjustment' ? formatCurrency(Math.abs(tx.amount)) : formatCurrency(tx.amount)}
                     </span>
                     <div className="relative">
                       <button 

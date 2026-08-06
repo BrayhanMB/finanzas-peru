@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, ArrowDownRight, ArrowUpRight, Loader2 } from 'lucide-react';
+import { X, ArrowDownRight, ArrowUpRight, Loader2, Scale, Plus, Minus } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -34,7 +34,8 @@ const EXPENSE_CATEGORIES = [
 const INCOME_CATEGORIES = ['Sueldo', 'Negocio', 'Inversiones', 'Otros', 'Préstamo a mi favor'];
 
 export default function TransactionModal({ isOpen, onClose, onSuccess, initialData }: TransactionModalProps) {
-  const [type, setType] = useState<'expense' | 'income'>('expense');
+  const [type, setType] = useState<'expense' | 'income' | 'balance_adjustment'>('expense');
+  const [adjustmentType, setAdjustmentType] = useState<'add' | 'sub'>('sub');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
   const [description, setDescription] = useState('');
@@ -44,7 +45,12 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
   useEffect(() => {
     if (initialData) {
       setType(initialData.type);
-      setAmount(initialData.amount.toString());
+      if (initialData.type === 'balance_adjustment') {
+        setAdjustmentType(initialData.amount >= 0 ? 'add' : 'sub');
+        setAmount(Math.abs(initialData.amount).toString());
+      } else {
+        setAmount(initialData.amount.toString());
+      }
       setCategory(initialData.category);
       setDescription(initialData.description || '');
       
@@ -70,9 +76,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
   if (!isOpen) return null;
 
   // Handle type change and reset category
-  const handleTypeChange = (newType: 'expense' | 'income') => {
+  const handleTypeChange = (newType: 'expense' | 'income' | 'balance_adjustment') => {
     setType(newType);
-    setCategory(newType === 'expense' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
+    if (newType === 'expense') setCategory(EXPENSE_CATEGORIES[0]);
+    else if (newType === 'income') setCategory(INCOME_CATEGORIES[0]);
+    else setCategory('Ajuste de Balance');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,10 +96,17 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
       const [y, m, d] = date.split('-');
       const submitDate = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
 
+      let finalAmount = Number(amount);
+      if (type === 'balance_adjustment' && adjustmentType === 'sub') {
+        finalAmount = -Math.abs(finalAmount);
+      } else if (type === 'balance_adjustment' && adjustmentType === 'add') {
+        finalAmount = Math.abs(finalAmount);
+      }
+
       const payload = {
         type: type,
-        amount: Number(amount),
-        category: category,
+        amount: finalAmount,
+        category: type === 'balance_adjustment' ? 'Ajuste de Balance' : category,
         description: description || null,
         created_at: submitDate.toISOString(),
       };
@@ -175,7 +190,49 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
               <ArrowUpRight size={18} />
               Ingreso
             </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange('balance_adjustment')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                type === 'balance_adjustment' 
+                  ? "bg-white text-slate-800 shadow-sm" 
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              <Scale size={18} />
+              Ajuste
+            </button>
           </div>
+
+          {type === 'balance_adjustment' && (
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setAdjustmentType('add')}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                  adjustmentType === 'add'
+                    ? "bg-white text-emerald-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                <Plus size={16} /> Sumar dinero
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdjustmentType('sub')}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                  adjustmentType === 'sub'
+                    ? "bg-white text-rose-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                <Minus size={16} /> Restar dinero
+              </button>
+            </div>
+          )}
 
           {/* Amount */}
           <div>
@@ -193,18 +250,20 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
           </div>
 
           {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Categoría</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 font-medium appearance-none"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+          {type !== 'balance_adjustment' && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Categoría</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 font-medium appearance-none"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Date */}
           <div>
