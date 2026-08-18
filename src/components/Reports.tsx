@@ -2,9 +2,8 @@ import { useState, useMemo } from 'react';
 import AllTransactionsModal from './AllTransactionsModal';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon, Download, Loader2 } from 'lucide-react';
-import { PDFReportTemplate } from './PDFReportTemplate';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -95,18 +94,92 @@ export default function Reports({ transactions, onEdit, onDelete, savingsGoal }:
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      const element = document.getElementById('pdf-report-content');
-      if (!element) return;
-
-      const opt: any = {
-        margin: 10,
-        filename: `Reporte_Finanzas_${MONTHS[selectedMonth]}_${selectedYear}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      const doc = new jsPDF();
+      const monthName = MONTHS[selectedMonth];
+      const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-PE', {
+          style: 'currency',
+          currency: 'PEN'
+        }).format(amount).replace('PEN', 'S/');
+      };
+      const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('es-PE', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
       };
 
-      await html2pdf().set(opt).from(element).save();
+      // Título
+      doc.setFontSize(22);
+      doc.text('Estado de Cuenta Mensual', 14, 20);
+      doc.setFontSize(12);
+      doc.setTextColor(100);
+      doc.text(`Finanzas Personales - ${monthName} ${selectedYear}`, 14, 28);
+      
+      // Resumen
+      doc.setFontSize(10);
+      doc.setTextColor(50);
+      doc.text('RESUMEN', 14, 40);
+      doc.setTextColor(0);
+      doc.text(`Ingresos Totales: ${formatCurrency(totalIncome)}`, 14, 46);
+      doc.text(`Gastos Totales: ${formatCurrency(totalExpense)}`, 14, 52);
+      doc.text(`Balance Neto: ${formatCurrency(netBalance)}`, 14, 58);
+      doc.text(`Meta de Ahorro: ${formatCurrency(savingsGoal)}`, 14, 64);
+
+      const incomes = filteredTransactions.filter(tx => tx.type === 'income' || tx.type === 'savings_withdrawal' || tx.category === 'Préstamo a mi favor');
+      const expenses = filteredTransactions.filter(tx => (tx.type === 'expense' || tx.type === 'savings_deposit') && tx.category !== 'Préstamo a mi favor');
+
+      let currentY = 75;
+
+      // Tabla Ingresos
+      doc.setFontSize(12);
+      doc.text('1. Detalle de Ingresos', 14, currentY);
+      currentY += 5;
+
+      if (incomes.length === 0) {
+        doc.setFontSize(10);
+        doc.text('No hay ingresos registrados en este mes.', 14, currentY + 5);
+        currentY += 15;
+      } else {
+        autoTable(doc, {
+          startY: currentY,
+          head: [['Fecha', 'Categoría', 'Descripción', 'Monto']],
+          body: incomes.map(tx => [
+            formatDate(tx.created_at),
+            tx.category,
+            tx.description || '-',
+            formatCurrency(tx.amount)
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [5, 150, 105] } // Emerald 600
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Tabla Gastos
+      doc.setFontSize(12);
+      doc.text('2. Detalle de Gastos', 14, currentY);
+      currentY += 5;
+
+      if (expenses.length === 0) {
+        doc.setFontSize(10);
+        doc.text('No hay gastos registrados en este mes.', 14, currentY + 5);
+      } else {
+        autoTable(doc, {
+          startY: currentY,
+          head: [['Fecha', 'Categoría', 'Descripción', 'Monto']],
+          body: expenses.map(tx => [
+            formatDate(tx.created_at),
+            tx.category,
+            tx.description || '-',
+            formatCurrency(tx.amount)
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [225, 29, 72] } // Rose 600
+        });
+      }
+
+      doc.save(`Reporte_Finanzas_${monthName}_${selectedYear}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Hubo un error al generar el PDF.');
@@ -345,20 +418,6 @@ export default function Reports({ transactions, onEdit, onDelete, savingsGoal }:
         subtitle={`Movimientos de ${MONTHS[selectedMonth]} ${selectedYear}`}
         showWeeklyChart={true}
       />
-
-      {/* Hidden PDF Template */}
-      <div className="absolute left-[-9999px] top-[-9999px]">
-        <PDFReportTemplate 
-          monthName={MONTHS[selectedMonth]}
-          year={selectedYear}
-          totalIncome={totalIncome}
-          totalExpense={totalExpense}
-          netBalance={netBalance}
-          savingsGoal={savingsGoal}
-          incomes={filteredTransactions.filter(tx => tx.type === 'income' || tx.type === 'savings_withdrawal' || tx.category === 'Préstamo a mi favor')}
-          expenses={filteredTransactions.filter(tx => (tx.type === 'expense' || tx.type === 'savings_deposit') && tx.category !== 'Préstamo a mi favor')}
-        />
-      </div>
 
     </div>
   );
