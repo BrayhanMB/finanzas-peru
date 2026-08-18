@@ -394,7 +394,8 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           <Reports 
             transactions={transactions} 
             onEdit={handleEdit} 
-            onDelete={handleDelete} 
+            onDelete={handleDelete}
+            savingsGoal={savingsGoal}
           />
         )}
 

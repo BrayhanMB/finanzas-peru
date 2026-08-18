@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
 import AllTransactionsModal from './AllTransactionsModal';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon, Download, Loader2 } from 'lucide-react';
+import { PDFReportTemplate } from './PDFReportTemplate';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -22,6 +25,7 @@ interface ReportsProps {
   transactions: Transaction[];
   onEdit: (tx: any) => void;
   onDelete: (id: string) => void;
+  savingsGoal: number;
 }
 
 const MONTHS = [
@@ -34,12 +38,13 @@ const COLORS = [
   '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6'
 ];
 
-export default function Reports({ transactions, onEdit, onDelete }: ReportsProps) {
+export default function Reports({ transactions, onEdit, onDelete, savingsGoal }: ReportsProps) {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCategoryType, setSelectedCategoryType] = useState<'income' | 'expense' | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -87,6 +92,29 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
     }
   ];
 
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      const element = document.getElementById('pdf-report-content');
+      if (!element) return;
+
+      const opt: any = {
+        margin: 10,
+        filename: `Reporte_Finanzas_${MONTHS[selectedMonth]}_${selectedYear}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Hubo un error al generar el PDF.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-8 mb-24 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
@@ -97,7 +125,15 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
           <p className="text-slate-500 text-sm">Desglose detallado de tu dinero</p>
         </div>
         
-        <div className="flex gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPDF}
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors disabled:opacity-50 flex-1 sm:flex-none"
+          >
+            {isGeneratingPDF ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            <span className="hidden sm:inline">Descargar PDF</span>
+          </button>
           <select 
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -309,6 +345,20 @@ export default function Reports({ transactions, onEdit, onDelete }: ReportsProps
         subtitle={`Movimientos de ${MONTHS[selectedMonth]} ${selectedYear}`}
         showWeeklyChart={true}
       />
+
+      {/* Hidden PDF Template */}
+      <div className="absolute left-[-9999px] top-[-9999px]">
+        <PDFReportTemplate 
+          monthName={MONTHS[selectedMonth]}
+          year={selectedYear}
+          totalIncome={totalIncome}
+          totalExpense={totalExpense}
+          netBalance={netBalance}
+          savingsGoal={savingsGoal}
+          incomes={filteredTransactions.filter(tx => tx.type === 'income' || tx.type === 'savings_withdrawal' || tx.category === 'Préstamo a mi favor')}
+          expenses={filteredTransactions.filter(tx => (tx.type === 'expense' || tx.type === 'savings_deposit') && tx.category !== 'Préstamo a mi favor')}
+        />
+      </div>
 
     </div>
   );
