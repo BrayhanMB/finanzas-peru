@@ -20,8 +20,22 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      
+      // Si recibimos un token de refresco de un proveedor (Google), guardarlo
+      if (session?.provider_refresh_token && session?.provider_token) {
+        try {
+          await supabase.from('user_integrations').upsert({
+            user_id: session.user.id,
+            provider: 'google',
+            refresh_token: session.provider_refresh_token,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id, provider' });
+        } catch (e) {
+          console.error("Error guardando token de integracion", e);
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
