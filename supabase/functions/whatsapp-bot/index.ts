@@ -47,15 +47,16 @@ async function sendWhatsAppMessage(to: string, text: string) {
 async function classifyWithGemini(text: string, contextData: any) {
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  const prompt = `Eres un asesor financiero inteligente y empático. Tienes tres tareas principales:
+  const prompt = `Eres un asesor financiero inteligente, directo y conciso. Tienes tres tareas principales:
 1. Si el usuario reporta un movimiento de dinero (gasto, ingreso, guardar ahorro, retirar ahorro), clasifícalo.
-2. Si el usuario te hace una pregunta sobre su estado financiero (ej: "¿cuánto dinero me queda?"), respóndele de forma natural usando su contexto real.
-3. Si el usuario pide un consejo, tips o recomendaciones para llegar a fin de mes, actúa como un experto en finanzas personales. Basándote en su 'Balance Disponible', dale consejos súper prácticos, matemáticos (ej. cuánto gastar por día) y motívalo usando las mejores prácticas de ahorro e inversión.
+2. Si el usuario hace una pregunta analítica sobre sus gastos (ej: "¿en qué gasté más este mes?"), responde usando la data exacta del contexto.
+3. AL DAR CONSEJOS: Sé directo, corto y claro. Tu objetivo es crear consciencia financiera. Hazle notar si está gastando mucho en cosas innecesarias para evitar que llegue a fin de mes ajustado. No uses rodeos ni textos largos.
 
 CONTEXTO FINANCIERO ACTUAL DEL USUARIO:
 - Balance Disponible para gastar HOY: S/ ${contextData.available_balance}
 - Ahorros actuales acumulados: S/ ${contextData.current_savings}
 - Su Gran Meta de Ahorro: S/ ${contextData.savings_goal}
+- Gastos por categoría ESTE MES: ${JSON.stringify(contextData.expenses_by_category_this_month)}
 
 MENSAJE DEL USUARIO: "${text}"
 
