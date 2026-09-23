@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, CheckCircle2, User, MessageCircle, Mail } from 'lucide-react';
+import { X, CheckCircle2, User, MessageCircle } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,9 +11,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess }: SettingsModalProps) {
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'perfil' | 'whatsapp' | 'automatizacion'>('perfil');
-  const [isGmailConnected, setIsGmailConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'perfil' | 'whatsapp'>('perfil');
   
   const [whatsapp, setWhatsapp] = useState('');
   const [balance, setBalance] = useState('');
@@ -28,26 +26,6 @@ export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess
       setGoal(userMetadata.savings_goal?.toString() || '');
     }
   }, [userMetadata]);
-
-  // Check if Gmail is connected
-  useEffect(() => {
-    async function checkIntegration() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      
-      const { data } = await supabase
-        .from('user_integrations')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .eq('provider', 'google')
-        .single();
-        
-      if (data) setIsGmailConnected(true);
-    }
-    if (isOpen) {
-      checkIntegration();
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -77,29 +55,6 @@ export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess
     }
   };
 
-  const handleConnectGmail = async () => {
-    setIsConnecting(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          scopes: 'https://www.googleapis.com/auth/gmail.readonly',
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent'
-          },
-          redirectTo: window.location.origin
-        }
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error(error);
-      alert("Error conectando con Google");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
@@ -122,11 +77,6 @@ export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess
             <MessageCircle size={16} />
             WhatsApp
             {activeTab === 'whatsapp' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#25D366] rounded-t-full" />}
-          </button>
-          <button onClick={() => setActiveTab('automatizacion')} className={`flex-1 pb-3 pt-2 px-2 text-sm font-semibold transition-colors relative flex items-center justify-center gap-1.5 ${activeTab === 'automatizacion' ? 'text-red-500' : 'text-slate-400 hover:text-slate-600'}`}>
-            <Mail size={16} />
-            Gmail
-            {activeTab === 'automatizacion' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-red-500 rounded-t-full" />}
           </button>
         </div>
 
@@ -157,38 +107,6 @@ export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess
                 <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 font-semibold" placeholder="999 888 777" />
               </div>
               <p className="text-xs text-slate-500 mt-1">El bot solo leerá mensajes desde este número.</p>
-            </div>
-          )}
-
-          {activeTab === 'automatizacion' && (
-            <div className="space-y-4">
-              <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-sm text-red-800">
-                <p className="font-bold mb-1">Automatización de Gastos</p>
-                <p>Conecta tu correo para que la app lea automáticamente tus consumos de Yape, BCP y BBVA.</p>
-              </div>
-              
-              {isGmailConnected ? (
-                <div className="flex items-center justify-center gap-2 p-4 bg-emerald-50 text-emerald-700 rounded-xl font-medium border border-emerald-200">
-                  <CheckCircle2 size={20} />
-                  Gmail Conectado
-                </div>
-              ) : (
-                <button
-                  onClick={handleConnectGmail}
-                  disabled={isConnecting}
-                  className="w-full flex items-center justify-center gap-2 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 px-4 rounded-xl transition-all"
-                >
-                  {isConnecting ? (
-                    <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      <img src="https://www.gstatic.com/images/branding/product/1x/gmail_32dp.png" alt="Gmail" className="w-5 h-5" />
-                      Conectar mi Gmail
-                    </>
-                  )}
-                </button>
-              )}
-              <p className="text-xs text-slate-500 text-center mt-2">Solo pediremos permiso de lectura (`readonly`).</p>
             </div>
           )}
         </div>
