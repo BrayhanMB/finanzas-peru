@@ -104,8 +104,8 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, onLog
         </div>
       </aside>
 
-      {/* Mobile Bottom Bar (Floating Pill Apple Style) */}
-      <div className="md:hidden fixed bottom-6 left-6 right-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-none dark:border dark:border-slate-800 z-30 px-6 py-3.5 flex justify-between items-center transition-colors">
+      {/* Mobile Bottom Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 z-30 px-6 py-3 flex justify-between items-center pb-[max(env(safe-area-inset-bottom),1rem)] transition-colors">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -114,24 +114,21 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, onLog
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
               className={cn(
-                "flex flex-col items-center gap-1 p-1 transition-all",
-                isActive ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"
+                "flex flex-col items-center gap-1 p-2 rounded-lg transition-all",
+                isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
               )}
             >
-              <div className={cn("flex items-center justify-center p-1.5 rounded-2xl transition-all", isActive ? "bg-slate-100 dark:bg-slate-800" : "")}>
-                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-              </div>
-              {isActive && <span className="text-[10px] font-bold">{tab.label}</span>}
+              <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-[10px] font-medium">{tab.label}</span>
             </button>
           );
         })}
         <button
-          onClick={onOpenSettings}
-          className="flex flex-col items-center gap-1 p-1 transition-all text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"
+          onClick={toggleTheme}
+          className="flex flex-col items-center gap-1 p-2 rounded-lg transition-all text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
         >
-          <div className="flex items-center justify-center p-1.5 rounded-2xl transition-all">
-             <Settings size={24} strokeWidth={2} />
-          </div>
+          {isDark ? <Sun size={24} /> : <Moon size={24} />}
+          <span className="text-[10px] font-medium">Tema</span>
         </button>
       </div>
     </>
