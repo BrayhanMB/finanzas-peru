@@ -8,19 +8,17 @@ import Reports from './Reports';
 import Payments from './Payments';
 import { 
   PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Tooltip 
-} from 'recharts';
-import { 
   MessageCircle,
   ArrowUpRight,
-  ArrowDownRight,
+  ArrowDownLeft,
   Plus,
   Bell,
   Scale,
-  PiggyBank
+  PiggyBank,
+  Eye,
+  EyeOff,
+  Clock,
+  User
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -28,24 +26,6 @@ import { twMerge } from 'tailwind-merge';
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
-// Colors for categories
-const CATEGORY_COLORS: Record<string, string> = {
-  'Alquiler': '#8b5cf6', // Violet
-  'Servicios del Hogar': '#0ea5e9', // Sky
-  'Internet y Celular': '#3b82f6', // Blue
-  'Suscripciones': '#ec4899', // Pink
-  'Mercado': '#10b981', // Emerald
-  'Gustos / Antojos': '#f59e0b', // Amber
-  'Transporte': '#f43f5e', // Rose
-  'Cuidado personal': '#14b8a6', // Teal
-  'Salud': '#ef4444', // Red
-  'Entretenimiento / Salidas': '#8b5cf6', // Violet
-  'Pago de deuda': '#64748b', // Slate
-  'Mascotas': '#f97316', // Orange
-  'Imprevistos': '#ef4444', // Red
-  'Otros': '#94a3b8', // Slate light
-};
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-PE', {
@@ -67,6 +47,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [transactions, setTransactions] = useState<any[]>([]);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [showBalance, setShowBalance] = useState(true);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Estás seguro que deseas eliminar este movimiento?')) return;
@@ -107,305 +88,183 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
     fetchTransactions();
   }, []);
 
-  // Calculate real totals for global balance
   const initialBalance = userMetadata?.initial_balance || 0;
-  
-  const totalIncome = transactions
-    .filter(t => t.type === 'income')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
-    
-  const totalExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-  const savingsDeposits = transactions
-    .filter(t => t.type === 'savings_deposit')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-  const savingsWithdrawals = transactions
-    .filter(t => t.type === 'savings_withdrawal')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
-  const balanceAdjustments = transactions
-    .filter(t => t.type === 'balance_adjustment')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const savingsDeposits = transactions.filter(t => t.type === 'savings_deposit').reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const savingsWithdrawals = transactions.filter(t => t.type === 'savings_withdrawal').reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const balanceAdjustments = transactions.filter(t => t.type === 'balance_adjustment').reduce((acc, curr) => acc + Number(curr.amount), 0);
     
   const balance = initialBalance + totalIncome - totalExpenses - savingsDeposits + savingsWithdrawals + balanceAdjustments;
   const currentSavings = savingsDeposits - savingsWithdrawals;
 
-  // Calculate THIS MONTH'S totals for the cards
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-
-  const currentMonthTransactions = transactions.filter(t => {
-    const date = new Date(t.created_at);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
-
-  const monthlyIncome = currentMonthTransactions
-    .filter(t => t.type === 'income' && t.category !== 'Préstamo a mi favor')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-  const monthlyExpenses = currentMonthTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
-  
-  const income = monthlyIncome;
-  const expenses = monthlyExpenses;
   const savingsGoal = userMetadata?.savings_goal || 5000.00;
-
-  // Generate dynamic chart data
-  const expenseTransactions = currentMonthTransactions.filter(t => t.type === 'expense');
-  const dynamicExpensesByCategory = expenseTransactions.reduce((acc: any[], curr) => {
-    const existingCategory = acc.find(c => c.name === curr.category);
-    if (existingCategory) {
-      existingCategory.value += Number(curr.amount);
-    } else {
-      acc.push({
-        name: curr.category,
-        value: Number(curr.amount),
-        color: CATEGORY_COLORS[curr.category] || '#6366f1' // Default Indigo
-      });
-    }
-    return acc;
-  }, []).sort((a, b) => b.value - a.value); // Sort by highest expense
-
-  const hasExpenses = dynamicExpensesByCategory.length > 0;
+  const savingsPercent = Math.min(100, Math.round((currentSavings / savingsGoal) * 100));
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex">
-      {/* Sidebar Navigation */}
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onLogout={onLogout}
-      />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex text-slate-900 dark:text-white transition-colors duration-300">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onOpenSettings={() => setIsSettingsOpen(true)} onLogout={onLogout} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 md:ml-64 pb-28 md:pb-10 min-w-0">
+      <div className="flex-1 md:ml-64 pb-28 md:pb-10 min-w-0 md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto">
         
-        {/* Header solo en mobile ya que el sidebar desktop ya tiene logo */}
-        <header className="bg-white dark:bg-slate-900 px-6 py-4 shadow-sm sticky top-0 z-10 md:hidden">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-sky-300 flex items-center justify-center shadow-sm">
-              <span className="text-xl leading-none">🐧</span>
-            </div>
-            <h1 className="font-bold text-xl text-slate-900 dark:text-white tracking-tight">Finanzas</h1>
-          </div>
-        </header>
-
         {activeTab === 'dashboard' && (
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 mt-8 space-y-6">
-            <div className="mb-2">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Hola, {userName.split(' ')[0]} 👋</h2>
-              <p className="text-slate-500 dark:text-slate-400">Aquí está el resumen de tus finanzas.</p>
-            </div>
-        {/* Balance Hero Card */}
-        <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center relative overflow-hidden transition-all hover:shadow-md">
-          <div className="absolute top-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500"></div>
-          <p className="text-slate-500 dark:text-slate-400 font-medium mb-2 uppercase tracking-wider text-xs">Balance Disponible</p>
-          <h2 className="text-5xl sm:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {formatCurrency(balance)}
-          </h2>
-        </section>
-
-        {/* Summary Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Ingresos del mes</p>
-              <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <ArrowUpRight size={18} strokeWidth={2.5} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-emerald-600">{formatCurrency(income)}</p>
-          </div>
-          
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Gastos del mes</p>
-              <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
-                <ArrowDownRight size={18} strokeWidth={2.5} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-rose-600">{formatCurrency(expenses)}</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-500 font-medium text-sm sm:text-base">Meta de ahorro</h3>
-              <span className="text-indigo-600 font-bold text-sm">
-                {Math.min(100, Math.round((currentSavings / savingsGoal) * 100))}%
-              </span>
-            </div>
-            <div className="mt-1">
-              <div className="flex justify-between text-xs font-medium text-slate-400 mb-2">
-                <span>{formatCurrency(currentSavings)}</span>
-                <span>{formatCurrency(savingsGoal)}</span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                <div 
-                  className="bg-indigo-500 h-2.5 rounded-full transition-all duration-1000 ease-out" 
-                  style={{ width: `${(currentSavings / savingsGoal) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Content Grid: Chart & Transactions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* Chart Section */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">Gastos por Categoría</h3>
-            <div className="h-64 w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={hasExpenses ? dynamicExpensesByCategory : [{ name: 'Sin gastos', value: 1, color: '#f1f5f9' }]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={95}
-                    paddingAngle={hasExpenses ? 5 : 0}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {(hasExpenses ? dynamicExpensesByCategory : [{ color: '#f1f5f9' }]).map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} className={hasExpenses ? "transition-all duration-300 hover:opacity-80" : ""} />
-                    ))}
-                  </Pie>
-                  {hasExpenses && (
-                    <Tooltip 
-                      formatter={(value: any) => formatCurrency(Number(value))}
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                    />
-                  )}
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Gastos</span>
-                <span className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(expenses)}</span>
-              </div>
-            </div>
+          <main className="px-6 mt-6 md:mt-10 space-y-8 max-w-lg mx-auto md:max-w-none">
             
-            {hasExpenses ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-6">
-                {dynamicExpensesByCategory.map((cat: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: cat.color }}></div>
-                      <span className="text-sm text-slate-600 font-medium">{cat.name}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-6 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
-                Aún no has registrado ningún gasto.
-              </div>
-            )}
-          </section>
-
-          {/* Transactions Section */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white">Últimos Movimientos</h3>
-              {transactions.length > 0 && (
-                <button 
-                  onClick={() => setIsAllTransactionsModalOpen(true)}
-                  className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 transition-colors"
-                >
-                  Ver todos
-                </button>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {transactions.length === 0 ? (
-                <div className="text-center py-10 px-4 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-100 dark:border-slate-800 border-dashed">
-                  <div className="w-16 h-16 bg-[#25D366]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle size={32} className="text-[#25D366]" strokeWidth={2} />
-                  </div>
-                  <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">¡Rompe el hielo! 🐧</h4>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-sm mx-auto">
-                    Tu cuenta está lista. Escríbele a Pingu por WhatsApp para registrar tu primer gasto o ingreso.
-                  </p>
-                  <a 
-                    href="https://wa.me/51924245759?text=¡Hola%20Pingu!%20Soy%20nuevo%20por%20aquí"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-[#25D366]/20 transition-transform hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    <MessageCircle size={20} />
-                    Abrir WhatsApp
-                  </a>
+            {/* Apple Style Header */}
+            <header className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                   <User className="text-slate-500 dark:text-slate-400" size={24} />
                 </div>
-              ) : (
-                transactions.slice(0, 5).map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:bg-slate-950 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center",
-                        tx.type === 'expense' ? "bg-rose-50 text-rose-600" : 
-                        tx.type === 'income' ? "bg-emerald-50 text-emerald-600" :
-                        tx.type === 'balance_adjustment' ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" :
-                        "bg-indigo-50 text-indigo-600"
-                      )}>
-                        {tx.type === 'expense' ? <ArrowDownRight size={20} /> : 
-                         tx.type === 'income' ? <ArrowUpRight size={20} /> :
-                         tx.type === 'balance_adjustment' ? <Scale size={20} /> :
-                         <PiggyBank size={20} />}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">{tx.category}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[150px] sm:max-w-[200px]">
-                          {tx.description}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {new Date(tx.created_at).toLocaleDateString('es-PE', { 
-                            year: 'numeric', month: 'short', day: 'numeric' 
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={cn(
-                        "font-bold text-lg",
-                        tx.type === 'expense' ? "text-slate-900 dark:text-white" : 
-                        tx.type === 'income' ? "text-emerald-600" :
-                        tx.type === 'balance_adjustment' ? "text-slate-500 dark:text-slate-400" :
-                        "text-indigo-600"
-                      )}>
-                        {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : 
-                         tx.type === 'balance_adjustment' ? (tx.amount > 0 ? '+' : '') : '+'}{tx.type === 'balance_adjustment' ? formatCurrency(Math.abs(tx.amount)) : formatCurrency(tx.amount)}
-                      </span>
-                    </div>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Buenos días,</p>
+                  <h2 className="text-lg font-bold">{userName}</h2>
+                </div>
+              </div>
+              <button className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center relative shadow-sm">
+                <Bell size={20} className="text-slate-700 dark:text-slate-300" />
+                <span className="absolute top-2.5 right-3 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-slate-900"></span>
+              </button>
+            </header>
+
+            {/* Apple Style Balance */}
+            <section className="pt-2 md:pt-4">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Balance Disponible</p>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+              </div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter">
+                  {showBalance ? formatCurrency(balance) : 'S/ •••••'}
+                </h1>
+                <button onClick={() => setShowBalance(!showBalance)} className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                  {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2">
+                <Clock size={12} className="text-slate-400" />
+                <p className="text-xs text-slate-400 font-medium">Actualizado hace un momento</p>
+              </div>
+            </section>
+
+            {/* Apple Style Quick Actions */}
+            <section className="pt-2">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg md:text-xl">Acciones Rápidas</h3>
+                <button onClick={() => setIsModalOpen(true)} className="text-sm font-bold text-slate-900 dark:text-white">Ver más</button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Nuevo Registro */}
+                <button onClick={() => setIsModalOpen(true)} className="bg-white dark:bg-slate-900 p-4 rounded-[1.25rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-start gap-3 transition-all hover:shadow-md hover:scale-[1.02] text-left">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <Plus size={20} strokeWidth={2.5} />
                   </div>
-                ))
-              )}
-            </div>
-          </section>
-        </div>
+                  <div>
+                    <p className="font-bold text-sm md:text-base">Nuevo Registro</p>
+                    <p className="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">Añadir manual</p>
+                  </div>
+                </button>
+                {/* WhatsApp */}
+                <a href="https://wa.me/51924245759" target="_blank" rel="noopener noreferrer" className="bg-white dark:bg-slate-900 p-4 rounded-[1.25rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-start gap-3 transition-all hover:shadow-md hover:scale-[1.02] text-left">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                    <MessageCircle size={20} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm md:text-base">Pingu Bot</p>
+                    <p className="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">Chat inteligente</p>
+                  </div>
+                </a>
+                {/* Metas */}
+                <button className="bg-white dark:bg-slate-900 p-4 rounded-[1.25rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-start gap-3 transition-all hover:shadow-md hover:scale-[1.02] text-left">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                    <PiggyBank size={20} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm md:text-base">Mis Metas</p>
+                    <p className="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{savingsPercent}% completado</p>
+                  </div>
+                </button>
+                {/* Reportes */}
+                <button onClick={() => setActiveTab('reportes')} className="bg-white dark:bg-slate-900 p-4 rounded-[1.25rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-start gap-3 transition-all hover:shadow-md hover:scale-[1.02] text-left">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                    <PieChart size={20} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm md:text-base">Reportes</p>
+                    <p className="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ver gráficos</p>
+                  </div>
+                </button>
+              </div>
+            </section>
+
+            {/* Apple Style Transaction History */}
+            <section className="pt-4">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-lg md:text-xl">Historial</h3>
+                <button onClick={() => setIsAllTransactionsModalOpen(true)} className="text-sm font-bold text-slate-900 dark:text-white">Ver todas</button>
+              </div>
+              <div className="space-y-6">
+                {transactions.length === 0 ? (
+                  <p className="text-center text-slate-500 py-10">No hay transacciones aún.</p>
+                ) : (
+                  transactions.slice(0, 10).map((tx) => (
+                    <div key={tx.id} onClick={() => handleEdit(tx)} className="flex items-center justify-between group cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
+                          tx.type === 'expense' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500" : 
+                          tx.type === 'income' ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500" :
+                          tx.type === 'balance_adjustment' ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" :
+                          "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500"
+                        )}>
+                          {tx.type === 'expense' ? <ArrowUpRight size={20} strokeWidth={2.5} /> : 
+                           tx.type === 'income' ? <ArrowDownLeft size={20} strokeWidth={2.5} /> :
+                           tx.type === 'balance_adjustment' ? <Scale size={20} strokeWidth={2.5} /> :
+                           <PiggyBank size={20} strokeWidth={2.5} />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white text-base group-hover:text-indigo-600 transition-colors">{tx.category}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                            {new Date(tx.created_at).toLocaleTimeString('es-PE', { hour: 'numeric', minute: '2-digit' })} • {(tx.description || '').substring(0,25)}{(tx.description || '').length > 25 ? '...' : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={cn(
+                          "font-bold text-base",
+                          tx.type === 'expense' || tx.type === 'savings_deposit' ? "text-rose-500" : 
+                          tx.type === 'income' ? "text-emerald-500" :
+                          "text-slate-900 dark:text-white"
+                        )}>
+                          {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : '+'}{formatCurrency(Math.abs(tx.amount))}
+                        </span>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 capitalize">
+                          {tx.type === 'expense' ? 'Gasto' : tx.type === 'income' ? 'Ingreso' : tx.type === 'savings_deposit' ? 'Ahorro' : 'Ajuste'}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
           </main>
         )}
 
         {activeTab === 'reportes' && (
-          <Reports 
-            transactions={transactions} 
-            onEdit={handleEdit} 
-            onDelete={handleDelete}
-            savingsGoal={savingsGoal}
-          />
+          <div className="px-4 md:px-8 mt-6">
+             <Reports transactions={transactions} onEdit={handleEdit} onDelete={handleDelete} savingsGoal={savingsGoal} />
+          </div>
         )}
 
         {activeTab === 'pagos' && (
-          <Payments />
+          <div className="px-4 md:px-8 mt-6">
+             <Payments />
+          </div>
         )}
 
         {activeTab === 'alertas' && (
           <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 text-center">
-            <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
+            <div className="w-20 h-20 bg-amber-100 dark:bg-amber-500/20 text-amber-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
               <Bell size={40} strokeWidth={2} />
             </div>
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Centro de Alertas</h2>
@@ -413,74 +272,18 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           </div>
         )}
 
-        {/* Floating Action Buttons */}
-        <div className="fixed bottom-24 md:bottom-6 right-6 z-20 flex flex-col md:flex-row gap-4 items-end md:items-center">
-          
-          <div className="relative group flex items-center">
-            {/* Tooltip (oculto en móviles, visible en hover en desktop) */}
-            <div className="absolute right-full mr-4 px-4 py-2 bg-slate-800 text-white text-xs font-medium rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl hidden md:block">
-              Escríbele a Pingu por WhatsApp e ingresa todo desde ahí
-              <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 border-4 border-transparent border-l-slate-800"></div>
-            </div>
-            
-            <a 
-              href="https://wa.me/51924245759"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-14 h-14 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-full shadow-lg shadow-[#25D366]/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-              title="Registrar en WhatsApp"
-            >
-              <MessageCircle size={26} className="fill-white/20" strokeWidth={2.5} />
-            </a>
-          </div>
-
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-            title="Nuevo movimiento manual"
-          >
+        {/* Floating Action Button ONLY FOR DESKTOP */}
+        <div className="hidden md:flex fixed bottom-6 right-6 z-20 flex-col gap-4 items-center">
+          <button onClick={() => setIsModalOpen(true)} className="w-14 h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full shadow-lg shadow-slate-900/20 flex items-center justify-center transition-transform hover:scale-105 active:scale-95">
             <Plus size={24} strokeWidth={2.5} />
           </button>
         </div>
 
       </div>
 
-      <TransactionModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={() => {
-          setIsModalOpen(false);
-          fetchTransactions();
-        }}
-      />
-
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)}
-        userMetadata={userMetadata}
-        onSuccess={() => {
-          setIsSettingsOpen(false);
-          window.location.reload();
-        }}
-      />
-
-      <TransactionModal 
-        isOpen={isModalOpen} 
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingTransaction(null);
-        }}
-        onSuccess={fetchTransactions}
-        initialData={editingTransaction}
-      />
-      
-      <AllTransactionsModal
-        isOpen={isAllTransactionsModalOpen}
-        onClose={() => setIsAllTransactionsModalOpen(false)}
-        transactions={transactions}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }} onSuccess={() => { setIsModalOpen(false); fetchTransactions(); }} initialData={editingTransaction} />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} userMetadata={userMetadata} onSuccess={() => { setIsSettingsOpen(false); window.location.reload(); }} />
+      <AllTransactionsModal isOpen={isAllTransactionsModalOpen} onClose={() => setIsAllTransactionsModalOpen(false)} transactions={transactions} onEdit={handleEdit} onDelete={handleDelete} />
     </div>
   );
 }
