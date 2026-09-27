@@ -148,30 +148,30 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
       />
 
       {/* Modal */}
-      <div className="bg-white rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md p-6 sm:p-8 relative z-10 animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 shadow-2xl">
+      <div className="bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md p-6 sm:p-8 relative z-10 animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 shadow-2xl">
         <button 
           onClick={onClose}
-          className="absolute right-6 top-6 text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100"
+          className="absolute right-6 top-6 text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100 dark:bg-slate-800"
         >
           <X size={24} />
         </button>
 
-        <h2 className="text-2xl font-bold text-slate-900 mb-8">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
           {initialData ? 'Editar Movimiento' : 'Nuevo Movimiento'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Type Toggle */}
-          <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
             <button
               type="button"
               onClick={() => handleTypeChange('expense')}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
                 type === 'expense' 
-                  ? "bg-white text-rose-600 shadow-sm" 
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-900 text-rose-600 shadow-sm" 
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
               )}
             >
               <ArrowDownRight size={18} />
@@ -183,8 +183,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
                 type === 'income' 
-                  ? "bg-white text-emerald-600 shadow-sm" 
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-900 text-emerald-600 shadow-sm" 
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
               )}
             >
               <ArrowUpRight size={18} />
@@ -196,8 +196,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
                 type === 'balance_adjustment' 
-                  ? "bg-white text-slate-800 shadow-sm" 
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-900 text-slate-800 shadow-sm" 
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
               )}
             >
               <Scale size={18} />
@@ -206,15 +206,15 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
           </div>
 
           {type === 'balance_adjustment' && (
-            <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
               <button
                 type="button"
                 onClick={() => setAdjustmentType('add')}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
                   adjustmentType === 'add'
-                    ? "bg-white text-emerald-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "bg-white dark:bg-slate-900 text-emerald-600 shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
                 )}
               >
                 <Plus size={16} /> Sumar dinero
@@ -225,8 +225,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
                   adjustmentType === 'sub'
-                    ? "bg-white text-rose-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "bg-white dark:bg-slate-900 text-rose-600 shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
                 )}
               >
                 <Minus size={16} /> Restar dinero
@@ -236,7 +236,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Monto (S/)</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Monto (S/)</label>
             <input 
               type="number" 
               step="0.01"
@@ -244,7 +244,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
               autoFocus
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 font-bold text-2xl text-center"
+              className="w-full px-5 py-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white font-bold text-2xl text-center"
               placeholder="0.00"
             />
           </div>
@@ -252,11 +252,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
           {/* Category */}
           {type !== 'balance_adjustment' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Categoría</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Categoría</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 font-medium appearance-none"
+                className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white font-medium appearance-none"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -267,24 +267,24 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
 
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Fecha</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Fecha</label>
             <input 
               type="date" 
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900"
+              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Descripción (Opcional)</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Descripción (Opcional)</label>
             <input 
               type="text" 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900"
+              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white"
               placeholder="Ej. Almuerzo con amigos"
             />
           </div>

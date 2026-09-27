@@ -172,7 +172,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const hasExpenses = dynamicExpensesByCategory.length > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex">
       {/* Sidebar Navigation */}
       <Sidebar 
         activeTab={activeTab} 
@@ -185,35 +185,35 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
       <div className="flex-1 md:ml-64 pb-28 md:pb-10 min-w-0">
         
         {/* Header solo en mobile ya que el sidebar desktop ya tiene logo */}
-        <header className="bg-white px-6 py-4 shadow-sm sticky top-0 z-10 md:hidden">
+        <header className="bg-white dark:bg-slate-900 px-6 py-4 shadow-sm sticky top-0 z-10 md:hidden">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-sky-300 flex items-center justify-center shadow-sm">
               <span className="text-xl leading-none">🐧</span>
             </div>
-            <h1 className="font-bold text-xl text-slate-900 tracking-tight">Finanzas</h1>
+            <h1 className="font-bold text-xl text-slate-900 dark:text-white tracking-tight">Finanzas</h1>
           </div>
         </header>
 
         {activeTab === 'dashboard' && (
           <main className="max-w-4xl mx-auto px-4 sm:px-6 mt-8 space-y-6">
             <div className="mb-2">
-              <h2 className="text-2xl font-bold text-slate-900">Hola, {userName.split(' ')[0]} 👋</h2>
-              <p className="text-slate-500">Aquí está el resumen de tus finanzas.</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Hola, {userName.split(' ')[0]} 👋</h2>
+              <p className="text-slate-500 dark:text-slate-400">Aquí está el resumen de tus finanzas.</p>
             </div>
         {/* Balance Hero Card */}
-        <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex flex-col items-center justify-center relative overflow-hidden transition-all hover:shadow-md">
+        <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center relative overflow-hidden transition-all hover:shadow-md">
           <div className="absolute top-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500"></div>
-          <p className="text-slate-500 font-medium mb-2 uppercase tracking-wider text-xs">Balance Disponible</p>
-          <h2 className="text-5xl sm:text-6xl font-extrabold text-slate-900 tracking-tight">
+          <p className="text-slate-500 dark:text-slate-400 font-medium mb-2 uppercase tracking-wider text-xs">Balance Disponible</p>
+          <h2 className="text-5xl sm:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {formatCurrency(balance)}
           </h2>
         </section>
 
         {/* Summary Grid */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-slate-500 font-medium text-sm">Ingresos del mes</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Ingresos del mes</p>
               <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
                 <ArrowUpRight size={18} strokeWidth={2.5} />
               </div>
@@ -221,9 +221,9 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             <p className="text-2xl font-bold text-emerald-600">{formatCurrency(income)}</p>
           </div>
           
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-slate-500 font-medium text-sm">Gastos del mes</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Gastos del mes</p>
               <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
                 <ArrowDownRight size={18} strokeWidth={2.5} />
               </div>
@@ -231,7 +231,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             <p className="text-2xl font-bold text-rose-600">{formatCurrency(expenses)}</p>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between transition-all hover:shadow-md">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-500 font-medium text-sm sm:text-base">Meta de ahorro</h3>
               <span className="text-indigo-600 font-bold text-sm">
@@ -243,7 +243,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                 <span>{formatCurrency(currentSavings)}</span>
                 <span>{formatCurrency(savingsGoal)}</span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                 <div 
                   className="bg-indigo-500 h-2.5 rounded-full transition-all duration-1000 ease-out" 
                   style={{ width: `${(currentSavings / savingsGoal) * 100}%` }}
@@ -256,8 +256,8 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
         {/* Content Grid: Chart & Transactions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Chart Section */}
-          <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md">
-            <h3 className="font-bold text-lg text-slate-900 mb-6">Gastos por Categoría</h3>
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
+            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">Gastos por Categoría</h3>
             <div className="h-64 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -285,7 +285,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Gastos</span>
-                <span className="text-xl font-bold text-slate-900">{formatCurrency(expenses)}</span>
+                <span className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(expenses)}</span>
               </div>
             </div>
             
@@ -301,16 +301,16 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                 ))}
               </div>
             ) : (
-              <div className="mt-6 text-center text-slate-500 text-sm font-medium">
+              <div className="mt-6 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
                 Aún no has registrado ningún gasto.
               </div>
             )}
           </section>
 
           {/* Transactions Section */}
-          <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 transition-all hover:shadow-md">
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg text-slate-900">Últimos Movimientos</h3>
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white">Últimos Movimientos</h3>
               {transactions.length > 0 && (
                 <button 
                   onClick={() => setIsAllTransactionsModalOpen(true)}
@@ -323,12 +323,12 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             
             <div className="space-y-4">
               {transactions.length === 0 ? (
-                <div className="text-center py-10 px-4 bg-slate-50/50 rounded-2xl border border-slate-100 border-dashed">
+                <div className="text-center py-10 px-4 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-100 dark:border-slate-800 border-dashed">
                   <div className="w-16 h-16 bg-[#25D366]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <MessageCircle size={32} className="text-[#25D366]" strokeWidth={2} />
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900 mb-2">¡Rompe el hielo! 🐧</h4>
-                  <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">¡Rompe el hielo! 🐧</h4>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-sm mx-auto">
                     Tu cuenta está lista. Escríbele a Pingu por WhatsApp para registrar tu primer gasto o ingreso.
                   </p>
                   <a 
@@ -343,13 +343,13 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                 </div>
               ) : (
                 transactions.slice(0, 5).map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:bg-slate-950 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
                         tx.type === 'expense' ? "bg-rose-50 text-rose-600" : 
                         tx.type === 'income' ? "bg-emerald-50 text-emerald-600" :
-                        tx.type === 'balance_adjustment' ? "bg-slate-100 text-slate-700" :
+                        tx.type === 'balance_adjustment' ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" :
                         "bg-indigo-50 text-indigo-600"
                       )}>
                         {tx.type === 'expense' ? <ArrowDownRight size={20} /> : 
@@ -358,8 +358,8 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                          <PiggyBank size={20} />}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900">{tx.category}</p>
-                        <p className="text-sm text-slate-500 truncate max-w-[150px] sm:max-w-[200px]">
+                        <p className="font-bold text-slate-900 dark:text-white">{tx.category}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[150px] sm:max-w-[200px]">
                           {tx.description}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
@@ -372,9 +372,9 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                     <div className="flex items-center gap-3">
                       <span className={cn(
                         "font-bold text-lg",
-                        tx.type === 'expense' ? "text-slate-900" : 
+                        tx.type === 'expense' ? "text-slate-900 dark:text-white" : 
                         tx.type === 'income' ? "text-emerald-600" :
-                        tx.type === 'balance_adjustment' ? "text-slate-500" :
+                        tx.type === 'balance_adjustment' ? "text-slate-500 dark:text-slate-400" :
                         "text-indigo-600"
                       )}>
                         {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : 
@@ -408,8 +408,8 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
               <Bell size={40} strokeWidth={2} />
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-3">Centro de Alertas</h2>
-            <p className="text-slate-500 text-lg">Aquí recibirás notificaciones cuando estés cerca de sobrepasar tu presupuesto. ¡Próximamente!</p>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Centro de Alertas</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-lg">Aquí recibirás notificaciones cuando estés cerca de sobrepasar tu presupuesto. ¡Próximamente!</p>
           </div>
         )}
 

@@ -59,15 +59,15 @@ export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
 
-      <div className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-900">Ajustes de Cuenta</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+      <div className="relative bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Ajustes de Cuenta</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 transition-colors">
             <X size={18} strokeWidth={2.5} />
           </button>
         </div>
 
-        <div className="flex border-b border-slate-100 px-2 pt-2 bg-slate-50/50">
+        <div className="flex border-b border-slate-100 dark:border-slate-800 px-2 pt-2 bg-slate-50 dark:bg-slate-950/50">
           <button onClick={() => setActiveTab('perfil')} className={`flex-1 pb-3 pt-2 px-2 text-sm font-semibold transition-colors relative flex items-center justify-center gap-1.5 ${activeTab === 'perfil' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
             <User size={16} />
             Perfil
@@ -84,34 +84,34 @@ export default function SettingsModal({ isOpen, onClose, userMetadata, onSuccess
           {activeTab === 'perfil' && (
             <>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Dinero Inicial (S/)</label>
-                <input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 font-semibold" />
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Dinero Inicial (S/)</label>
+                <input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 dark:text-white font-semibold" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Ingreso Mensual Fijo (S/) <span className="text-slate-400 font-normal ml-1">(Opcional)</span></label>
-                <p className="text-xs text-slate-500 mb-2">Si tu ingreso es variable, déjalo en blanco.</p>
-                <input type="number" value={income} onChange={(e) => setIncome(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 font-semibold" />
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Ingreso Mensual Fijo (S/) <span className="text-slate-400 font-normal ml-1">(Opcional)</span></label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Si tu ingreso es variable, déjalo en blanco.</p>
+                <input type="number" value={income} onChange={(e) => setIncome(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 dark:text-white font-semibold" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Meta de Ahorro (S/)</label>
-                <input type="number" value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 font-semibold" />
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Meta de Ahorro (S/)</label>
+                <input type="number" value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 dark:text-white font-semibold" />
               </div>
             </>
           )}
 
           {activeTab === 'whatsapp' && (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Número de WhatsApp</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Número de WhatsApp</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">+51</span>
-                <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 font-semibold" placeholder="999 888 777" />
+                <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 dark:text-white font-semibold" placeholder="999 888 777" />
               </div>
-              <p className="text-xs text-slate-500 mt-1">El bot solo leerá mensajes desde este número.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">El bot solo leerá mensajes desde este número.</p>
             </div>
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-100 bg-slate-50">
+        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
           <button onClick={handleSave} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

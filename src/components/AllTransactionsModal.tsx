@@ -57,19 +57,19 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className={cn(
-          "bg-white rounded-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200",
+          "bg-white dark:bg-slate-900 rounded-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200",
           showWeeklyChart ? "max-w-5xl" : "max-w-2xl"
         )}
         onClick={(e) => { e.stopPropagation(); setActiveDropdownId(null); }}
       >
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white/50 backdrop-blur-md sticky top-0 z-10">
+        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">{title || 'Todos los Movimientos'}</h2>
-            <p className="text-sm text-slate-500 mt-1">{subtitle || 'Historial completo de tus finanzas'}</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{title || 'Todos los Movimientos'}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{subtitle || 'Historial completo de tus finanzas'}</p>
           </div>
           <button 
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors"
+            className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:bg-slate-800 transition-colors"
           >
             <X size={20} />
           </button>
@@ -82,16 +82,16 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
           {/* Left: Transaction list */}
           <div className="space-y-3">
             {transactions.length === 0 ? (
-              <p className="text-center text-slate-500 py-12">Aún no hay movimientos registrados.</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-12">Aún no hay movimientos registrados.</p>
             ) : (
               transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                <div key={tx.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:bg-slate-950 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className={cn(
                       "w-12 h-12 rounded-full flex items-center justify-center shrink-0",
                       tx.type === 'expense' ? "bg-rose-50 text-rose-600" : 
                       tx.type === 'income' ? "bg-emerald-50 text-emerald-600" :
-                      tx.type === 'balance_adjustment' ? "bg-slate-100 text-slate-700" :
+                      tx.type === 'balance_adjustment' ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" :
                       "bg-indigo-50 text-indigo-600"
                     )}>
                       {tx.type === 'expense' ? <ArrowDownRight size={20} /> : 
@@ -100,8 +100,8 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
                        <PiggyBank size={20} />}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">{tx.category}</p>
-                      <p className="text-sm text-slate-500 truncate max-w-[150px] sm:max-w-[300px]">
+                      <p className="font-bold text-slate-900 dark:text-white">{tx.category}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[150px] sm:max-w-[300px]">
                         {tx.description}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
@@ -115,9 +115,9 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
                   <div className="flex items-center gap-3">
                     <span className={cn(
                       "font-bold text-lg",
-                      tx.type === 'expense' ? "text-slate-900" : 
+                      tx.type === 'expense' ? "text-slate-900 dark:text-white" : 
                       tx.type === 'income' ? "text-emerald-600" :
-                      tx.type === 'balance_adjustment' ? "text-slate-500" :
+                      tx.type === 'balance_adjustment' ? "text-slate-500 dark:text-slate-400" :
                       "text-indigo-600"
                     )}>
                       {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : 
@@ -131,11 +131,11 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
                         <MoreVertical size={20} />
                       </button>
                       {activeDropdownId === tx.id && (
-                        <div className="absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => { onEdit(tx); setActiveDropdownId(null); onClose(); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                        <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 py-1 z-20" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => { onEdit(tx); setActiveDropdownId(null); onClose(); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-950 flex items-center gap-2">
                             <Edit2 size={16} /> Editar
                           </button>
-                          <button onClick={() => { onDelete(tx.id); setActiveDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 flex items-center gap-2">
+                          <button onClick={() => { onDelete(tx.id); setActiveDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 dark:bg-slate-950 flex items-center gap-2">
                             <Trash2 size={16} /> Eliminar
                           </button>
                         </div>
@@ -149,8 +149,8 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
 
           {/* Right: Chart */}
           {showWeeklyChart && (
-            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col mt-6 lg:mt-0 lg:sticky lg:top-0 h-[380px]">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Desglose Semanal</h3>
+            <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col mt-6 lg:mt-0 lg:sticky lg:top-0 h-[380px]">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Desglose Semanal</h3>
               <div className="flex-1 w-full min-h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={weeklyData()} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

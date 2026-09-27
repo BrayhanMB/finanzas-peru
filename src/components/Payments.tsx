@@ -62,7 +62,7 @@ export default function Payments() {
     if (dueDay === currentDay) return { label: 'Vence Hoy', color: 'text-rose-600 bg-rose-50' };
     if (dueDay > currentDay && dueDay <= currentDay + 5) return { label: `Faltan ${dueDay - currentDay} días`, color: 'text-amber-600 bg-amber-50' };
     if (dueDay < currentDay) return { label: 'Ya pasó este mes', color: 'text-emerald-600 bg-emerald-50' };
-    return { label: `Día ${dueDay}`, color: 'text-slate-600 bg-slate-100' };
+    return { label: `Día ${dueDay}`, color: 'text-slate-600 bg-slate-100 dark:bg-slate-800' };
   };
 
   if (loading) {
@@ -78,8 +78,8 @@ export default function Payments() {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">Pagos Fijos</h2>
-          <p className="text-slate-500 mt-1">Controla tus suscripciones y gastos recurrentes</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Pagos Fijos</h2>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Controla tus suscripciones y gastos recurrentes</p>
         </div>
         
         <button 
@@ -94,7 +94,7 @@ export default function Payments() {
         </button>
       </div>
 
-      <div className="bg-white/70 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/40 shadow-xl shadow-slate-200/50">
+      <div className="bg-white dark:bg-slate-900/70 backdrop-blur-xl p-6 sm:p-8 rounded-[2rem] border border-white/40 shadow-xl shadow-slate-200/50">
         
         <div className="flex items-center gap-4 mb-8 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
           <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
@@ -107,12 +107,12 @@ export default function Payments() {
         </div>
 
         {payments.length === 0 ? (
-          <div className="text-center py-16 border border-slate-100 border-dashed rounded-[2rem] bg-slate-50/50">
-            <div className="w-16 h-16 bg-white text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+          <div className="text-center py-16 border border-slate-100 dark:border-slate-800 border-dashed rounded-[2rem] bg-slate-50 dark:bg-slate-950/50">
+            <div className="w-16 h-16 bg-white dark:bg-slate-900 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
               <Calendar size={32} />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">No hay pagos registrados</h3>
-            <p className="text-slate-500 max-w-sm mx-auto mb-6">Añade tus pagos fijos como alquiler, agua, luz o Netflix para tener un control exacto de tus obligaciones del mes.</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No hay pagos registrados</h3>
+            <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Añade tus pagos fijos como alquiler, agua, luz o Netflix para tener un control exacto de tus obligaciones del mes.</p>
             <button 
               onClick={() => setIsModalOpen(true)}
               className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline"
@@ -126,17 +126,17 @@ export default function Payments() {
               const status = getStatus(payment.due_day);
               
               return (
-                <div key={payment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+                <div key={payment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group">
                   
                   <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center shrink-0 text-slate-700">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center shrink-0 text-slate-700 dark:text-slate-300">
                       <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Día</span>
                       <span className="text-xl font-bold">{payment.due_day}</span>
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 text-lg">{payment.name}</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-lg">{payment.name}</h4>
                       {payment.details && (
-                        <p className="text-slate-500 text-sm">{payment.details}</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">{payment.details}</p>
                       )}
                       <div className="mt-2 sm:hidden inline-block">
                         <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", status.color)}>
@@ -146,7 +146,7 @@ export default function Payments() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto w-full border-t sm:border-0 border-slate-100 pt-4 sm:pt-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto w-full border-t sm:border-0 border-slate-100 dark:border-slate-800 pt-4 sm:pt-0">
                     
                     <div className="hidden sm:block">
                       <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", status.color)}>
@@ -154,21 +154,21 @@ export default function Payments() {
                       </span>
                     </div>
 
-                    <div className="font-bold text-slate-900 text-xl">
+                    <div className="font-bold text-slate-900 dark:text-white text-xl">
                       S/ {Number(payment.amount).toFixed(2)}
                     </div>
 
                     <div className="relative">
                       <button 
                         onClick={(e) => { e.stopPropagation(); setActiveDropdownId(activeDropdownId === payment.id ? null : payment.id); }} 
-                        className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded-xl transition-colors"
+                        className="p-2 text-slate-400 hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-300 rounded-xl transition-colors"
                       >
                         <MoreVertical size={20} />
                       </button>
                       
                       {activeDropdownId === payment.id && (
-                        <div className="absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-20" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => { setEditingPayment(payment); setActiveDropdownId(null); setIsModalOpen(true); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
+                        <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1 z-20" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => { setEditingPayment(payment); setActiveDropdownId(null); setIsModalOpen(true); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-950 flex items-center gap-2 font-medium">
                             <Edit2 size={16} /> Editar
                           </button>
                           <button onClick={() => { handleDelete(payment.id); setActiveDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium">

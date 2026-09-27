@@ -1,11 +1,21 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Nunito', 'sans-serif';
 }
 
 @layer base {
   html, body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply antialiased transition-colors duration-300;
+  }
+
+  html {
+    @apply bg-slate-50 text-slate-900;
+  }
+
+  html.dark {
+    @apply bg-slate-950 text-slate-50;
   }
 }
