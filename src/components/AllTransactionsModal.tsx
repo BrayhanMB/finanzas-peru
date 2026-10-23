@@ -32,11 +32,23 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
   };
 
   const weeklyData = () => {
+    if (transactions.length === 0) return [];
+
+    // Encontrar el mes/año base de los movimientos mostrados
+    const dates = transactions.map(t => new Date(t.created_at).getTime());
+    const sampleDate = new Date(Math.max(...dates));
+    const year = sampleDate.getFullYear();
+    const month = sampleDate.getMonth();
+
+    // Días totales en el mes
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
     const weeks = [
-      { name: 'Semana 1', value: 0 },
-      { name: 'Semana 2', value: 0 },
-      { name: 'Semana 3', value: 0 },
-      { name: 'Semana 4', value: 0 },
+      { name: 'Sem 1 (1-7)', value: 0 },
+      { name: 'Sem 2 (8-14)', value: 0 },
+      { name: 'Sem 3 (15-21)', value: 0 },
+      { name: 'Sem 4 (22-28)', value: 0 },
+      ...(totalDaysInMonth > 28 ? [{ name: `Sem 5 (29-${totalDaysInMonth})`, value: 0 }] : []),
     ];
     
     transactions.forEach(tx => {
@@ -44,10 +56,11 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
       const day = date.getDate();
       const amount = Number(tx.amount);
       
-      if (day <= 7) weeks[0].value += amount;
-      else if (day <= 14) weeks[1].value += amount;
-      else if (day <= 21) weeks[2].value += amount;
-      else weeks[3].value += amount;
+      if (day >= 1 && day <= 7) weeks[0].value += amount;
+      else if (day >= 8 && day <= 14) weeks[1].value += amount;
+      else if (day >= 15 && day <= 21) weeks[2].value += amount;
+      else if (day >= 22 && day <= 28) weeks[3].value += amount;
+      else if (weeks[4]) weeks[4].value += amount;
     });
     
     return weeks;

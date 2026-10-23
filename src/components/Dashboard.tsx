@@ -364,7 +364,8 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {new Date(tx.created_at).toLocaleDateString('es-PE', { 
-                            year: 'numeric', month: 'short', day: 'numeric' 
+                            year: 'numeric', month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit'
                           })}
                         </p>
                       </div>

@@ -93,8 +93,42 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
       
       if (!user) throw new Error('No usuario autenticado');
 
-      const [y, m, d] = date.split('-');
-      const submitDate = new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0);
+      const now = new Date();
+      let submitDate: Date;
+      if (initialData) {
+        const prevDate = new Date(initialData.created_at);
+        const [y, m, d] = date.split('-');
+        // Mantener la hora original si solo editó fecha o datos
+        submitDate = new Date(
+          Number(y),
+          Number(m) - 1,
+          Number(d),
+          prevDate.getHours(),
+          prevDate.getMinutes(),
+          prevDate.getSeconds()
+        );
+      } else {
+        const [y, m, d] = date.split('-');
+        const isToday = 
+          Number(y) === now.getFullYear() &&
+          Number(m) - 1 === now.getMonth() &&
+          Number(d) === now.getDate();
+        
+        if (isToday) {
+          // Si es hoy, usar hora actual
+          submitDate = now;
+        } else {
+          // Si es otra fecha, asignar la hora actual en esa fecha elegida
+          submitDate = new Date(
+            Number(y),
+            Number(m) - 1,
+            Number(d),
+            now.getHours(),
+            now.getMinutes(),
+            now.getSeconds()
+          );
+        }
+      }
 
       let finalAmount = Number(amount);
       if (type === 'balance_adjustment' && adjustmentType === 'sub') {
