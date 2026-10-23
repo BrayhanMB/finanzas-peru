@@ -17,9 +17,11 @@ interface AllTransactionsModalProps {
   title?: string;
   subtitle?: string;
   showWeeklyChart?: boolean;
+  month?: number;
+  year?: number;
 }
 
-export default function AllTransactionsModal({ isOpen, onClose, transactions, onEdit, onDelete, title, subtitle, showWeeklyChart }: AllTransactionsModalProps) {
+export default function AllTransactionsModal({ isOpen, onClose, transactions, onEdit, onDelete, title, subtitle, showWeeklyChart, month, year }: AllTransactionsModalProps) {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -32,38 +34,75 @@ export default function AllTransactionsModal({ isOpen, onClose, transactions, on
   };
 
   const weeklyData = () => {
-    if (transactions.length === 0) return [];
+    // Determinar año y mes de referencia
+    let targetYear = year;
+    let targetMonth = month;
 
-    // Encontrar el mes/año base de los movimientos mostrados
-    const dates = transactions.map(t => new Date(t.created_at).getTime());
-    const sampleDate = new Date(Math.max(...dates));
-    const year = sampleDate.getFullYear();
-    const month = sampleDate.getMonth();
+    if (targetYear === undefined || targetMonth === undefined) {
+      if (transactions.length > 0) {
+        const firstDate = new Date(transactions[0].created_at);
+        targetYear = firstDate.getFullYear();
+        targetMonth = firstDate.getMonth();
+      } else {
+        const now = new Date();
+        targetYear = now.getFullYear();
+        targetMonth = now.getMonth();
+      }
+    }
 
-    // Días totales en el mes
-    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+    // Días totales del mes seleccionado
+    const totalDays = new Date(targetYear, targetMonth + 1, 0).getDate();
 
-    const weeks = [
-      { name: 'Sem 1 (1-7)', value: 0 },
-      { name: 'Sem 2 (8-14)', value: 0 },
-      { name: 'Sem 3 (15-21)', value: 0 },
-      { name: 'Sem 4 (22-28)', value: 0 },
-      ...(totalDaysInMonth > 28 ? [{ name: `Sem 5 (29-${totalDaysInMonth})`, value: 0 }] : []),
-    ];
-    
+    // Construir semanas ajustadas al calendario real (Lunes a Domingo)
+    interface WeekRange {
+      weekIndex: number;
+      startDay: number;
+      endDay: number;
+      name: string;
+      value: number;
+    }
+
+    const weeks: WeekRange[] = [];
+    let startDay = 1;
+    let currentWeekNum = 1;
+
+    while (startDay <= totalDays) {
+      const currentDate = new Date(targetYear, targetMonth, startDay);
+      const dayOfWeek = currentDate.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+      // Días hasta el próximo domingo (0)
+      const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+      const endDay = Math.min(startDay + daysUntilSunday, totalDays);
+
+      weeks.push({
+        weekIndex: currentWeekNum,
+        startDay,
+        endDay,
+        name: `Sem ${currentWeekNum} (${startDay}-${endDay})`,
+        value: 0,
+      });
+
+      startDay = endDay + 1;
+      currentWeekNum++;
+    }
+
+    // Distribuir cada transacción en su respectiva semana del calendario
     transactions.forEach(tx => {
       const date = new Date(tx.created_at);
-      const day = date.getDate();
-      const amount = Number(tx.amount);
-      
-      if (day >= 1 && day <= 7) weeks[0].value += amount;
-      else if (day >= 8 && day <= 14) weeks[1].value += amount;
-      else if (day >= 15 && day <= 21) weeks[2].value += amount;
-      else if (day >= 22 && day <= 28) weeks[3].value += amount;
-      else if (weeks[4]) weeks[4].value += amount;
+      // Validar que pertenezca al mes y año seleccionado
+      if (date.getFullYear() === targetYear && date.getMonth() === targetMonth) {
+        const day = date.getDate();
+        const amount = Number(tx.amount);
+        const targetWeek = weeks.find(w => day >= w.startDay && day <= w.endDay);
+        if (targetWeek) {
+          targetWeek.value += amount;
+        }
+      }
     });
-    
-    return weeks;
+
+    return weeks.map(w => ({
+      name: w.name,
+      value: w.value,
+    }));
   };
 
   return (
