@@ -19,7 +19,92 @@ const CATEGORIES = [
   'Imprevistos', 'Otros', 'Sueldo', 'Negocio', 'Inversiones', 'Ahorro', 'Préstamo a mi favor'
 ];
 
-async function sendWhatsAppMessage(to: string, text: string) {
+async function getWhatsAppMedia(mediaId: string): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    // 1. Obtener la URL del archivo multimedia de WhatsApp
+    const mediaUrlRes = await fetch(`https://graph.facebook.com/v19.0/${mediaId}`, {
+      headers: {
+        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+      }
+    });
+    const mediaData = await mediaUrlRes.json();
+    if (!mediaData.url) {
+      console.error("No se pudo obtener URL multimedia:", mediaData);
+      return null;
+    }
+
+    // 2. Descargar los bytes de la imagen
+    const fileRes = await fetch(mediaData.url, {
+      headers: {
+        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+      }
+    });
+    const arrayBuffer = await fileRes.arrayBuffer();
+    const mimeType = mediaData.mime_type || 'image/jpeg';
+    
+    // Convertir a base64 (Deno compatible)
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binary = '';
+    const len = uint8Array.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    const base64 = btoa(binary);
+
+    return { base64, mimeType };
+  } catch (err) {
+    console.error("Error descargando media de WhatsApp:", err);
+    return null;
+  }
+}
+
+async function classifyImageWithGemini(imageBase64: string, mimeType: string, caption: string | undefined, contextData: any) {
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+  const prompt = `Eres un asesor financiero inteligente y extractor experto de comprobantes bancarios, billeteras digitales (Yape, Plin, transferencias BCP, BBVA, Interbank, etc.).
+El usuario acaba de enviar una imagen/captura de pantalla (probablemente una constancia de Yape, Plin o pago).
+
+CONTEXTO FINANCIERO ACTUAL DEL USUARIO:
+- Balance Disponible para gastar HOY: S/ ${contextData.available_balance}
+- Ahorros actuales acumulados: S/ ${contextData.current_savings}
+- Su Gran Meta de Ahorro: S/ ${contextData.savings_goal}
+- Gastos por categoría ESTE MES: ${JSON.stringify(contextData.expenses_by_category_this_month)}
+
+TEXTO / COMENTARIO ADJUNTO DEL USUARIO (si hay): "${caption || ''}"
+
+INSTRUCCIONES DE EXTRACCIÓN:
+1. Revisa detenidamente la imagen. Identifica si es un comprobante de Yape o pago similar:
+   - Identifica el MONTO exacto (ejemplo: S/ 15.00, 25, 4.50).
+   - Identifica si es un GASTO / ENVÍO ("¡Yapeaste!", "Enviaste a...", "Pago realizado") o un INGRESO / RECEPCIÓN ("Te yapearon", "Recibiste").
+   - Identifica el destinatario o concepto ("A Juan Perez", mensaje de nota, etc.).
+   - Asigna la CATEGORÍA más apropiada entre: ${CATEGORIES.join(', ')}. Si en la nota o destinatario dice comida, mercado, taxi, etc., úsalo. Si no es claro el rubro específico, clasifícalo en "Otros" o "Gustos / Antojos" o lo que mejor calce.
+   - Si el usuario colocó un comentario adjunto (caption), úsalo como prioridad para la categoría o descripción.
+2. Si la imagen NO es un comprobante de pago o no se reconoce monto alguno:
+   - "action": "not_receipt"
+   - "reply": "Mensaje corto indicando que no se pudo detectar un comprobante o monto claro."
+
+Devuelve ÚNICAMENTE un objeto JSON válido (sin formato markdown ni texto adicional):
+{
+  "action": "record_transaction" o "not_receipt",
+  "reply": "Si action es not_receipt, explica brevemente qué pasó.",
+  "type": "expense" (si yapeó / pagó) o "income" (si recibió dinero / le yapearon),
+  "amount": número extraído (ej: 15.50),
+  "category": "Una de: ${CATEGORIES.join(', ')}",
+  "description": "Breve detalle (ej: Yape a Carlos / Almuerzo)"
+}`;
+
+  const imagePart = {
+    inlineData: {
+      data: imageBase64,
+      mimeType: mimeType
+    }
+  };
+
+  const result = await model.generateContent([prompt, imagePart]);
+  let responseText = result.response.text();
+  responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+  return JSON.parse(responseText);
+}
   try {
     const url = `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`;
     const response = await fetch(url, {
@@ -98,11 +183,13 @@ serve(async (req) => {
       if (body.object && body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
         const message = body.entry[0].changes[0].value.messages[0]
         const from = message.from
+        const messageType = message.type
         const text = message.text?.body
+        const image = message.image
 
-        if (!text) return new Response('OK', { status: 200 })
+        if (!text && !image) return new Response('OK', { status: 200 })
 
-        console.log(`Nuevo mensaje de ${from}: ${text}`)
+        console.log(`Nuevo mensaje de ${from}. Tipo: ${messageType}`)
 
         // 1. Obtener el contexto del usuario ANTES de llamar a Gemini
         const { data: contextData, error: contextError } = await supabase.rpc('get_financial_context_by_whatsapp', { p_phone: from });
@@ -113,19 +200,38 @@ serve(async (req) => {
           return new Response('OK', { status: 200 });
         }
 
-        // Interceptor de Bienvenida para usuarios nuevos
-        if (text.toLowerCase().includes('nuevo por aquí') || text.toLowerCase().includes('nuevo por aqui')) {
-          await sendWhatsAppMessage(from, "¡Hola! Soy Pingu 🐧, tu asistente financiero. Ya tengo tu cuenta configurada. A partir de ahora, cada vez que gastes, ganes o ahorres dinero, solo cuéntamelo por aquí. ¡Con un mensaje normal, como si hablaras con un amigo 🐧!");
+        // Interceptor de Bienvenida para usuarios nuevos (solo si es texto)
+        if (text && (text.toLowerCase().includes('nuevo por aquí') || text.toLowerCase().includes('nuevo por aqui'))) {
+          await sendWhatsAppMessage(from, "¡Hola! Soy Pingu 🐧, tu asistente financiero. Ya tengo tu cuenta configurada. A partir de ahora, cada vez que gastes, ganes o ahorres dinero, cuéntamelo por aquí o envíame la captura de tu Yape / Plin 📲 ¡Yo me encargo de registrarlo!");
           return new Response('OK', { status: 200 });
         }
 
-        // 2. Llamar a Gemini inyectando el contexto real
-        const classification = await classifyWithGemini(text, contextData);
-        
-        // 3. Evaluar el camino (Pregunta o Transacción)
-        if (classification.action === 'answer_question') {
-           await sendWhatsAppMessage(from, "🤖 " + classification.reply);
-           return new Response('OK', { status: 200 });
+        let classification: any;
+
+        // 2. Procesamiento según el tipo de mensaje: Imagen (Yape/Comprobante) o Texto
+        if (image) {
+          console.log(`Procesando imagen ID: ${image.id}`);
+          const media = await getWhatsAppMedia(image.id);
+          if (!media) {
+            await sendWhatsAppMessage(from, "❌ No pude descargar la imagen enviada. Por favor, intenta enviarla de nuevo.");
+            return new Response('OK', { status: 200 });
+          }
+
+          classification = await classifyImageWithGemini(media.base64, media.mimeType, image.caption, contextData);
+
+          if (classification.action === 'not_receipt') {
+            await sendWhatsAppMessage(from, `🤖 ${classification.reply || "No logré identificar los datos de un pago en esta imagen. Asegúrate de que se vea nítido el monto y destinatario."}`);
+            return new Response('OK', { status: 200 });
+          }
+        } else {
+          // Procesamiento de mensaje de texto habitual
+          classification = await classifyWithGemini(text, contextData);
+          
+          // Evaluar camino de pregunta analítica
+          if (classification.action === 'answer_question') {
+             await sendWhatsAppMessage(from, "🤖 " + classification.reply);
+             return new Response('OK', { status: 200 });
+          }
         }
 
         // 4. Validaciones para que el usuario NO quede en negativo
