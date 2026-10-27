@@ -104,6 +104,8 @@ Devuelve ÚNICAMENTE un objeto JSON válido (sin formato markdown ni texto adici
   let responseText = result.response.text();
   responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
   return JSON.parse(responseText);
+}
+
 async function sendWhatsAppMessage(to: string, text: string) {
   try {
     const url = `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`;
