@@ -7,7 +7,9 @@ import {
   Utensils, 
   Car, 
   Receipt, 
-  ChevronRight
+  ChevronRight,
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -38,8 +40,9 @@ const normalizeCategoryName = (category: string) => {
   return category;
 };
 
-export default function TransactionsView({ transactions, onEdit, onOpenAllModal }: TransactionsViewProps) {
+export default function TransactionsView({ transactions, onEdit, onDelete, onOpenAllModal }: TransactionsViewProps) {
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  const [deletingTx, setDeletingTx] = useState<any | null>(null);
 
   // Filtrado por tipo (Todos, Ingresos, Gastos)
   const filteredTransactions = useMemo(() => {
@@ -99,7 +102,7 @@ export default function TransactionsView({ transactions, onEdit, onOpenAllModal 
     if (lower.includes('transporte') || lower.includes('taxi') || lower.includes('uber') || lower.includes('gasolina')) {
       return <Car size={20} className="text-slate-600 dark:text-slate-300" />;
     }
-    if (lower.includes('servicio') || lower.includes('internet') || lower.includes('luz') || lower.includes('agua')) {
+    if (lower.includes('servicio') || lower.includes('internet') || lower.includes('celular') || lower.includes('luz') || lower.includes('agua')) {
       return <Receipt size={20} className="text-slate-600 dark:text-slate-300" />;
     }
     if (type === 'income') {
@@ -112,6 +115,13 @@ export default function TransactionsView({ transactions, onEdit, onOpenAllModal 
       return <PiggyBank size={20} className="text-indigo-600 dark:text-indigo-400" />;
     }
     return <ShoppingBag size={20} className="text-slate-600 dark:text-slate-300" />;
+  };
+
+  const confirmDelete = () => {
+    if (deletingTx) {
+      onDelete(deletingTx.id);
+      setDeletingTx(null);
+    }
   };
 
   const renderTransactionGroup = (title: string, list: any[]) => {
@@ -129,23 +139,25 @@ export default function TransactionsView({ transactions, onEdit, onOpenAllModal 
               <div 
                 key={tx.id}
                 onClick={() => onEdit(tx)}
-                className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all active:scale-[0.99] cursor-pointer"
+                className="group relative bg-white dark:bg-slate-900/90 rounded-2xl p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all active:scale-[0.99] cursor-pointer"
               >
-                <div className="flex items-center gap-3.5">
+                {/* Lado izquierdo: Icono + Detalle */}
+                <div className="flex items-center gap-3.5 min-w-0 pr-2">
                   <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
                     {getCategoryIcon(tx.category, tx.type)}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug truncate">
                       {normalizeCategoryName(tx.category)}
                     </h4>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[170px] sm:max-w-xs">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[140px] sm:max-w-xs">
                       {tx.description || 'Sin detalle'} • {new Date(tx.created_at).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
 
-                <div className="text-right">
+                {/* Lado derecho: Monto + Botón Eliminar sutil estilo Apple */}
+                <div className="flex items-center gap-2.5 shrink-0">
                   <span className={cn(
                     "font-extrabold text-base tracking-tight",
                     isNegative ? "text-slate-900 dark:text-white" : 
@@ -154,6 +166,19 @@ export default function TransactionsView({ transactions, onEdit, onOpenAllModal 
                   )}>
                     {isNegative ? '-' : isPositive ? '+' : ''}{formatCurrency(Math.abs(tx.amount))}
                   </span>
+
+                  {/* Botón Eliminar integrado con efecto hover suave */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletingTx(tx);
+                    }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                    title="Eliminar movimiento"
+                  >
+                    <Trash2 size={16} strokeWidth={2} />
+                  </button>
                 </div>
               </div>
             );
@@ -239,6 +264,42 @@ export default function TransactionsView({ transactions, onEdit, onOpenAllModal 
             </div>
           )}
         </>
+      )}
+
+      {/* Modal de Confirmación de Eliminación Estilo Apple Action Sheet */}
+      {deletingTx && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-sm p-6 shadow-2xl border border-slate-100 dark:border-slate-800 text-center animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={28} strokeWidth={2.2} />
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">¿Eliminar este movimiento?</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5">
+              Se eliminará el registro de <span className="font-semibold text-slate-700 dark:text-slate-300">{normalizeCategoryName(deletingTx.category)}</span> por <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(Math.abs(deletingTx.amount))}</span> y tu balance se actualizará automáticamente.
+            </p>
+
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-rose-600/20 transition-all active:scale-[0.98] text-sm"
+              >
+                Sí, eliminar movimiento
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeletingTx(null)}
+                className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] text-sm"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
