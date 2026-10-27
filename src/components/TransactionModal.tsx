@@ -75,7 +75,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
 
   if (!isOpen) return null;
 
-  // Handle type change and reset category
   const handleTypeChange = (newType: 'expense' | 'income' | 'balance_adjustment') => {
     setType(newType);
     if (newType === 'expense') setCategory(EXPENSE_CATEGORIES[0]);
@@ -90,7 +89,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) throw new Error('No usuario autenticado');
 
       const now = new Date();
@@ -98,7 +96,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
       if (initialData) {
         const prevDate = new Date(initialData.created_at);
         const [y, m, d] = date.split('-');
-        // Mantener la hora original si solo editó fecha o datos
         submitDate = new Date(
           Number(y),
           Number(m) - 1,
@@ -115,10 +112,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
           Number(d) === now.getDate();
         
         if (isToday) {
-          // Si es hoy, usar hora actual
           submitDate = now;
         } else {
-          // Si es otra fecha, asignar la hora actual en esa fecha elegida
           submitDate = new Date(
             Number(y),
             Number(m) - 1,
@@ -174,123 +169,129 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-4 sm:p-0">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md p-6 sm:p-8 relative z-10 animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 shadow-2xl">
-        <button 
-          onClick={onClose}
-          className="absolute right-6 top-6 text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-100 dark:bg-slate-800"
-        >
-          <X size={24} />
-        </button>
+      <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-6 sm:p-8 relative z-10 animate-in slide-in-from-bottom-12 sm:zoom-in-95 duration-300 shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[92vh] overflow-y-auto">
+        
+        {/* Grab Handle en Móvil estilo iOS */}
+        <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4 sm:hidden" />
 
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
-          {initialData ? 'Editar Movimiento' : 'Nuevo Movimiento'}
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            {initialData ? 'Editar Movimiento' : 'Nuevo Movimiento'}
+          </h2>
+          <button 
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          >
+            <X size={18} strokeWidth={2.5} />
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           
-          {/* Type Toggle */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
+          {/* Segmented Type Toggle */}
+          <div className="bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl flex items-center">
             <button
               type="button"
               onClick={() => handleTypeChange('expense')}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200",
                 type === 'expense' 
-                  ? "bg-white dark:bg-slate-900 text-rose-600 shadow-sm" 
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
+                  ? "bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-sm" 
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               )}
             >
-              <ArrowDownRight size={18} />
+              <ArrowDownRight size={16} strokeWidth={2.5} />
               Gasto
             </button>
             <button
               type="button"
               onClick={() => handleTypeChange('income')}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200",
                 type === 'income' 
-                  ? "bg-white dark:bg-slate-900 text-emerald-600 shadow-sm" 
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
+                  ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm" 
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               )}
             >
-              <ArrowUpRight size={18} />
+              <ArrowUpRight size={16} strokeWidth={2.5} />
               Ingreso
             </button>
             <button
               type="button"
               onClick={() => handleTypeChange('balance_adjustment')}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200",
                 type === 'balance_adjustment' 
-                  ? "bg-white dark:bg-slate-900 text-slate-800 shadow-sm" 
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" 
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               )}
             >
-              <Scale size={18} />
+              <Scale size={16} strokeWidth={2.5} />
               Ajuste
             </button>
           </div>
 
           {type === 'balance_adjustment' && (
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
+            <div className="flex bg-slate-100 dark:bg-slate-800/60 p-1 rounded-2xl">
               <button
                 type="button"
                 onClick={() => setAdjustmentType('add')}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
                   adjustmentType === 'add'
                     ? "bg-white dark:bg-slate-900 text-emerald-600 shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
+                    : "text-slate-400"
                 )}
               >
-                <Plus size={16} /> Sumar dinero
+                <Plus size={14} /> Sumar dinero
               </button>
               <button
                 type="button"
                 onClick={() => setAdjustmentType('sub')}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
                   adjustmentType === 'sub'
                     ? "bg-white dark:bg-slate-900 text-rose-600 shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300"
+                    : "text-slate-400"
                 )}
               >
-                <Minus size={16} /> Restar dinero
+                <Minus size={14} /> Restar dinero
               </button>
             </div>
           )}
 
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Monto (S/)</label>
-            <input 
-              type="number" 
-              step="0.01"
-              required
-              autoFocus
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-5 py-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white font-bold text-2xl text-center"
-              placeholder="0.00"
-            />
+          {/* Amount Display Gigante Apple Style */}
+          <div className="bg-slate-50 dark:bg-slate-950/70 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Monto a registrar</label>
+            <div className="flex items-center justify-center gap-1">
+              <span className="text-2xl sm:text-3xl font-black text-slate-400">S/</span>
+              <input 
+                type="number" 
+                step="0.01"
+                required
+                autoFocus
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full bg-transparent border-none focus:outline-none text-slate-900 dark:text-white font-black text-4xl sm:text-5xl text-center tracking-tight placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                placeholder="0.00"
+              />
+            </div>
           </div>
 
           {/* Category */}
           {type !== 'balance_adjustment' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Categoría</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Categoría</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white font-medium appearance-none"
+                className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 dark:text-white font-semibold text-sm cursor-pointer"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -301,33 +302,33 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, initialDa
 
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Fecha</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Fecha</label>
             <input 
               type="date" 
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white"
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 dark:text-white font-semibold text-sm cursor-pointer"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Descripción (Opcional)</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Descripción (Opcional)</label>
             <input 
               type="text" 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-slate-900 dark:text-white"
-              placeholder="Ej. Almuerzo con amigos"
+              className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-slate-900 dark:text-white font-semibold text-sm placeholder:text-slate-400"
+              placeholder="Ej. Almuerzo familiar, Yape..."
             />
           </div>
 
-          {/* Submit */}
+          {/* Submit Button */}
           <button 
             type="submit" 
             disabled={!amount || loading}
-            className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-4"
+            className="w-full bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 text-white dark:text-slate-900 font-extrabold py-4 rounded-2xl shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 mt-4 text-base"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={20} />
