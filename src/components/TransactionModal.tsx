@@ -17,11 +17,11 @@ interface TransactionModalProps {
 
 const EXPENSE_CATEGORIES = [
   'Alquiler',
-  'Servicios del Hogar',
+  'Servicios',
   'Internet y Celular',
   'Suscripciones',
   'Mercado',
-  'Gustos / Antojos',
+  'Gustos',
   'Transporte',
   'Cuidado personal',
   'Salud',

@@ -5,8 +5,8 @@ import Sidebar, { type TabType } from './Sidebar';
 import SettingsModal from './SettingsModal';
 import AllTransactionsModal from './AllTransactionsModal';
 import TransactionsView from './TransactionsView';
+import Profile from './Profile';
 import Reports from './Reports';
-import Payments from './Payments';
 import { 
   PieChart, 
   Pie, 
@@ -15,7 +15,6 @@ import {
   Tooltip 
 } from 'recharts';
 import { 
-  MessageCircle,
   ArrowUpRight,
   ArrowDownRight,
   Plus,
@@ -29,10 +28,12 @@ import {
 // Colores refinados estilo Apple
 const CATEGORY_COLORS: Record<string, string> = {
   'Alquiler': '#6366f1',
+  'Servicios': '#0ea5e9',
   'Servicios del Hogar': '#0ea5e9',
   'Internet y Celular': '#3b82f6',
   'Suscripciones': '#ec4899',
   'Mercado': '#10b981',
+  'Gustos': '#f59e0b',
   'Gustos / Antojos': '#f59e0b',
   'Transporte': '#f43f5e',
   'Cuidado personal': '#14b8a6',
@@ -177,7 +178,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenNewTransaction={() => setIsModalOpen(true)}
         onLogout={onLogout}
       />
 
@@ -193,7 +194,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
             </h1>
           </div>
           <button 
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={() => setActiveTab('perfil')}
             className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 flex items-center justify-center shadow-sm"
           >
             <span className="text-lg">🐧</span>
@@ -387,30 +388,19 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           />
         )}
 
-        {activeTab === 'pagos' && (
-          <Payments />
+        {activeTab === 'perfil' && (
+          <Profile 
+            userName={userName}
+            userMetadata={userMetadata}
+            onLogout={onLogout}
+            onSuccess={() => {
+              window.location.reload();
+            }}
+          />
         )}
 
-        {/* Floating Action Buttons */}
-        <div className="fixed bottom-24 md:bottom-6 right-6 z-20 flex flex-col md:flex-row gap-4 items-end md:items-center">
-          
-          <div className="relative group flex items-center">
-            <div className="absolute right-full mr-4 px-4 py-2 bg-slate-800 text-white text-xs font-medium rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl hidden md:block">
-              Escríbele a Pingu por WhatsApp e ingresa todo desde ahí
-              <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 border-4 border-transparent border-l-slate-800"></div>
-            </div>
-            
-            <a 
-              href="https://wa.me/51924245759"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-14 h-14 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-full shadow-lg shadow-[#25D366]/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-              title="Registrar en WhatsApp"
-            >
-              <MessageCircle size={26} className="fill-white/20" strokeWidth={2.5} />
-            </a>
-          </div>
-
+        {/* Floating Action Button (Solo para Desktop) */}
+        <div className="hidden md:flex fixed bottom-6 right-6 z-20 items-center">
           <button 
             onClick={() => setIsModalOpen(true)}
             className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"

@@ -13,8 +13,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
 
 const CATEGORIES = [
-  'Alquiler', 'Servicios del Hogar', 'Internet y Celular', 'Suscripciones',
-  'Mercado', 'Gustos / Antojos', 'Transporte', 'Cuidado personal',
+  'Alquiler', 'Servicios', 'Internet y Celular', 'Suscripciones',
+  'Mercado', 'Gustos', 'Transporte', 'Cuidado personal',
   'Salud', 'Entretenimiento / Salidas', 'Pago de deuda', 'Mascotas',
   'Imprevistos', 'Otros', 'Sueldo', 'Negocio', 'Inversiones', 'Ahorro', 'Préstamo a mi favor'
 ];
