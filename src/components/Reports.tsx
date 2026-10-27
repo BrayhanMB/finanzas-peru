@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import AllTransactionsModal from './AllTransactionsModal';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon, Download, Loader2, ChevronRight } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon, Download, Loader2, ChevronRight, BarChart2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { clsx, type ClassValue } from 'clsx';
@@ -52,6 +52,7 @@ export default function Reports({ transactions, onEdit, onDelete, savingsGoal }:
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCategoryType, setSelectedCategoryType] = useState<'income' | 'expense' | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [chartView, setChartView] = useState<'dona' | 'flujo'>('dona');
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -195,7 +196,7 @@ export default function Reports({ transactions, onEdit, onDelete, savingsGoal }:
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-4 pb-28 space-y-6">
+    <div className="max-w-xl mx-auto px-4 sm:px-6 mt-4 pb-28 space-y-6">
       
       {/* Header and iOS Filters Bar */}
       <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -236,47 +237,60 @@ export default function Reports({ transactions, onEdit, onDelete, savingsGoal }:
         </div>
       </div>
 
-      {/* Summary Cards Apple Style */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Ingresos */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-400">Ingresos Totales</span>
-            <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <TrendingUp size={16} strokeWidth={2.5} />
+      {/* Summary Container con diseño unificado estilo Apple (Igual a la página de inicio) */}
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider px-1">Resumen del Mes:</h3>
+        
+        <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-3 divide-y divide-slate-100 dark:divide-slate-800/80 border border-slate-100 dark:border-slate-800/80 shadow-sm">
+          {/* Ingresos Totales */}
+          <div className="p-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <TrendingUp size={22} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Ingresos Totales</h4>
+                <p className="text-xs text-slate-400">Total percibido</p>
+              </div>
             </div>
+            <span className="font-extrabold text-base sm:text-lg text-emerald-600 dark:text-emerald-400">
+              +{new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(totalIncome)}
+            </span>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-            S/ {totalIncome.toFixed(2)}
-          </p>
-        </div>
 
-        {/* Gastos */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-400">Gastos Totales</span>
-            <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-              <TrendingDown size={16} strokeWidth={2.5} />
+          {/* Gastos Totales */}
+          <div className="p-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <TrendingDown size={22} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Gastos Totales</h4>
+                <p className="text-xs text-slate-400">Total consumido</p>
+              </div>
             </div>
+            <span className="font-extrabold text-base sm:text-lg text-rose-600 dark:text-rose-400">
+              -{new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(totalExpense)}
+            </span>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
-            S/ {totalExpense.toFixed(2)}
-          </p>
-        </div>
 
-        {/* Balance Neto */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-400">Balance Neto</span>
-            <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <DollarSign size={16} strokeWidth={2.5} />
+          {/* Balance Neto */}
+          <div className="p-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <DollarSign size={22} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Balance Neto</h4>
+                <p className="text-xs text-slate-400">Diferencia final</p>
+              </div>
             </div>
+            <span className={cn("font-extrabold text-base sm:text-lg", netBalance >= 0 ? "text-slate-900 dark:text-white" : "text-rose-600")}>
+              {netBalance >= 0 ? '+' : '-'}S/ {Math.abs(netBalance).toFixed(2)}
+            </span>
           </div>
-          <p className={cn("text-2xl sm:text-3xl font-black", netBalance >= 0 ? "text-slate-900 dark:text-white" : "text-rose-600")}>
-            {netBalance >= 0 ? '+' : '-'}S/ {Math.abs(netBalance).toFixed(2)}
-          </p>
         </div>
-      </div>
+      </section>
 
       {filteredTransactions.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-slate-900/60 rounded-[2rem] border border-slate-100 dark:border-slate-800">
@@ -287,59 +301,110 @@ export default function Reports({ transactions, onEdit, onDelete, savingsGoal }:
           <p className="text-slate-400 text-xs">No hay transacciones para {MONTHS[selectedMonth]} {selectedYear}.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
           
-          {/* Gráfico de Dona y Barras */}
-          <div className="space-y-6">
-            {pieChartData.length > 0 && (
-              <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-                <h3 className="font-bold text-base text-slate-900 dark:text-white mb-4">Distribución de Gastos</h3>
-                <div className="h-[220px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieChartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={80}
-                        paddingAngle={4}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {pieChartData.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip 
-                        formatter={(value: any) => [`S/ ${Number(value).toFixed(2)}`, 'Gasto']}
-                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+          {/* Fusión Visual de Gráficos: Distribución y Flujo en una sola tarjeta compacta */}
+          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+            
+            {/* Toggle Segmentado Apple entre Distribución y Flujo */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                {chartView === 'dona' ? 'Distribución de Gastos' : 'Flujo de Efectivo'}
+              </h3>
+              
+              <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setChartView('dona')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+                    chartView === 'dona'
+                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  )}
+                >
+                  <PieChartIcon size={14} />
+                  <span>Dona</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartView('flujo')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+                    chartView === 'flujo'
+                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  )}
+                >
+                  <BarChart2 size={14} />
+                  <span>Flujo</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Vista 1: Gráfico de Dona Centrado */}
+            {chartView === 'dona' && (
+              <div className="h-[230px] w-full flex items-center justify-center relative animate-in fade-in zoom-in-95 duration-200">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieChartData.length > 0 ? pieChartData : [{ name: 'Sin gastos', value: 1 }]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={65}
+                      outerRadius={95}
+                      paddingAngle={4}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {pieChartData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value: any) => [`S/ ${Number(value).toFixed(2)}`, 'Gasto']}
+                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Gastos</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white">S/ {totalExpense.toFixed(2)}</span>
                 </div>
               </div>
             )}
 
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-              <h3 className="font-bold text-base text-slate-900 dark:text-white mb-4">Flujo de Efectivo</h3>
-              <div className="h-[200px] w-full">
+            {/* Vista 2: Gráfico de Flujo de Efectivo Centrado */}
+            {chartView === 'flujo' && (
+              <div className="h-[230px] w-full animate-in fade-in zoom-in-95 duration-200">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <BarChart data={barChartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" opacity={0.6} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={(val) => `S/${val}`} />
                     <RechartsTooltip 
                       cursor={{ fill: 'transparent' }}
                       contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
                     />
-                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '15px' }} />
-                    <Bar dataKey="Ingresos" fill="#10b981" radius={[8, 8, 0, 0]} maxBarSize={45} />
-                    <Bar dataKey="Gastos" fill="#f43f5e" radius={[8, 8, 0, 0]} maxBarSize={45} />
+                    <Bar dataKey="Ingresos" fill="#10b981" radius={[10, 10, 0, 0]} maxBarSize={55} />
+                    <Bar dataKey="Gastos" fill="#f43f5e" radius={[10, 10, 0, 0]} maxBarSize={55} />
                   </BarChart>
                 </ResponsiveContainer>
+                
+                {/* Leyenda minimalista integrada */}
+                <div className="flex items-center justify-center gap-6 mt-2 pt-2 border-t border-slate-50 dark:border-slate-800/60">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Ingresos</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#f43f5e]" />
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Gastos</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
           </div>
 
           {/* Listas Detalladas Apple Style con Tap para abrir desglose */}
@@ -348,7 +413,7 @@ export default function Reports({ transactions, onEdit, onDelete, savingsGoal }:
               <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-base text-slate-900 dark:text-white">Detalle de Gastos</h3>
-                  <span className="text-[11px] text-slate-400">Toca para ver desglose</span>
+                  <span className="text-[11px] text-slate-400">Toca para ver semanas</span>
                 </div>
                 <div className="space-y-2.5">
                   {pieChartData.map((category, index) => (
