@@ -58,8 +58,58 @@ async function getWhatsAppMedia(mediaId: string): Promise<{ base64: string; mime
   }
 }
 
+async function recordOrUpdateContactRule(userId: string, contactName: string | undefined, category: string) {
+  if (!contactName || contactName.trim().length < 2) return;
+  const cleanName = contactName.trim();
+
+  try {
+    // Buscar si ya existe la regla
+    const { data: existing, error: selectError } = await supabase
+      .from('contact_rules')
+      .select('id, category, usage_count')
+      .eq('user_id', userId)
+      .ilike('contact_name', cleanName)
+      .maybeSingle();
+
+    if (selectError) {
+      console.error("Error consultando contact_rules:", selectError);
+      return;
+    }
+
+    if (existing) {
+      // Si la categoría coincide, incrementa el contador
+      // Si el usuario le especificó una categoría diferente, actualiza la categoría y reinicia/aumenta contador
+      const newCount = existing.category === category ? (existing.usage_count || 1) + 1 : 2;
+      await supabase
+        .from('contact_rules')
+        .update({
+          category: category,
+          usage_count: newCount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      console.log(`Regla actualizada para ${cleanName}: ${category} (veces: ${newCount})`);
+    } else {
+      // Crear nueva regla inicial
+      await supabase
+        .from('contact_rules')
+        .insert({
+          user_id: userId,
+          contact_name: cleanName,
+          category: category,
+          usage_count: 1
+        });
+      console.log(`Nueva regla guardada para ${cleanName}: ${category} (veces: 1)`);
+    }
+  } catch (err) {
+    console.error("Error gestionando contact_rules:", err);
+  }
+}
+
 async function classifyImageWithGemini(imageBase64: string, mimeType: string, caption: string | undefined, contextData: any) {
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+  const learnedRulesStr = JSON.stringify(contextData.learned_rules || {});
 
   const prompt = `Eres un asesor financiero inteligente y extractor experto de comprobantes bancarios, billeteras digitales (Yape, Plin, transferencias BCP, BBVA, Interbank, etc.).
 El usuario acaba de enviar una imagen/captura de pantalla (probablemente una constancia de Yape, Plin o pago).
@@ -70,16 +120,23 @@ CONTEXTO FINANCIERO ACTUAL DEL USUARIO:
 - Su Gran Meta de Ahorro: S/ ${contextData.savings_goal}
 - Gastos por categoría ESTE MES: ${JSON.stringify(contextData.expenses_by_category_this_month)}
 
+REGLAS DE APRENDIZAJE PREVIO (Personas recurrentes y su categoría fija aprendida):
+${learnedRulesStr}
+
 TEXTO / COMENTARIO ADJUNTO DEL USUARIO (si hay): "${caption || ''}"
 
-INSTRUCCIONES DE EXTRACCIÓN:
+INSTRUCCIONES DE EXTRACCIÓN Y CATEGORIZACIÓN:
 1. Revisa detenidamente la imagen. Identifica si es un comprobante de Yape o pago similar:
    - Identifica el MONTO exacto (ejemplo: S/ 15.00, 25, 4.50).
    - Identifica si es un GASTO / ENVÍO ("¡Yapeaste!", "Enviaste a...", "Pago realizado") o un INGRESO / RECEPCIÓN ("Te yapearon", "Recibiste").
-   - Identifica el destinatario o concepto ("A Juan Perez", mensaje de nota, etc.).
-   - Asigna la CATEGORÍA más apropiada entre: ${CATEGORIES.join(', ')}. Si en la nota o destinatario dice comida, mercado, taxi, etc., úsalo. Si no es claro el rubro específico, clasifícalo en "Otros" o "Gustos / Antojos" o lo que mejor calce.
-   - Si el usuario colocó un comentario adjunto (caption), úsalo como prioridad para la categoría o descripción.
-2. Si la imagen NO es un comprobante de pago o no se reconoce monto alguno:
+   - Identifica el NOMBRE COMPLETO o PRIMER NOMBRE del destinatario o remitente exacto (ej: "Juan Pérez", "María Ramos", "Bodega Don Pepe"). Guárdalo en el campo "contact_name".
+   
+2. ASIGNACIÓN INTELIGENTE DE CATEGORÍA:
+   - PRIORIDAD 1: Si el usuario escribió un comentario (caption) indicando explícitamente a qué corresponde (ej: "almuerzo", "deuda", "transporte"), usa esa categoría.
+   - PRIORIDAD 2: Si el usuario NO indicó categoría pero el nombre del contacto aparece en las REGLAS DE APRENDIZAJE PREVIO, USA AUTOMÁTICAMENTE LA CATEGORÍA APRENDIDA para esa persona.
+   - PRIORIDAD 3: Si no está en las reglas aprendidas ni en el texto, deduce la categoría más coherente entre: ${CATEGORIES.join(', ')}. Si no hay certeza, clasifícalo en "Otros" o "Gustos / Antojos".
+
+3. Si la imagen NO es un comprobante de pago o no se reconoce monto alguno:
    - "action": "not_receipt"
    - "reply": "Mensaje corto indicando que no se pudo detectar un comprobante o monto claro."
 
@@ -90,7 +147,9 @@ Devuelve ÚNICAMENTE un objeto JSON válido (sin formato markdown ni texto adici
   "type": "expense" (si yapeó / pagó) o "income" (si recibió dinero / le yapearon),
   "amount": número extraído (ej: 15.50),
   "category": "Una de: ${CATEGORIES.join(', ')}",
-  "description": "Breve detalle (ej: Yape a Carlos / Almuerzo)"
+  "contact_name": "Nombre de la persona o comercio que figura en el comprobante (ej: Juan Pérez)",
+  "description": "Breve detalle (ej: Yape a Juan Pérez / Almuerzo)",
+  "is_auto_categorized": true o false (true si fue categorizado gracias a una regla de aprendizaje previo)
 }`;
 
   const imagePart = {
@@ -267,6 +326,11 @@ serve(async (req) => {
           return new Response('OK', { status: 200 });
         }
 
+        // 6. Si fue por imagen o se detectó un contacto, aprender/actualizar regla de categorización
+        if (image && classification.contact_name) {
+          await recordOrUpdateContactRule(contextData.user_id, classification.contact_name, classification.category);
+        }
+
         // Respuestas dinámicas según el tipo de movimiento
         if (classification.type === 'savings_deposit') {
           await sendWhatsAppMessage(from, `✅ ¡Perfecto! Recuerda guardar ese dinero en una cuenta aparte para que no tengas sorpresas en el futuro 🐷.\n\nAbono a tu ahorro registrado: S/ ${classification.amount}`);
@@ -275,7 +339,10 @@ serve(async (req) => {
         } else {
           const tipo = classification.type === 'expense' ? 'Gasto' : 'Ingreso';
           const icono = classification.type === 'expense' ? '📉' : '📈';
-          await sendWhatsAppMessage(from, `✅ ¡Listo! ${icono} ${tipo} registrado:\n\n*Monto:* S/ ${classification.amount}\n*Categoría:* ${classification.category}\n*Descripción:* ${classification.description}\n\nRevisa tu Dashboard.`);
+          const autoNotice = classification.is_auto_categorized 
+            ? `\n🧠 _Categorizado automáticamente como *${classification.category}* por coincidir con tus transferencias habituales a ${classification.contact_name}._`
+            : '';
+          await sendWhatsAppMessage(from, `✅ ¡Listo! ${icono} ${tipo} registrado:\n\n*Monto:* S/ ${classification.amount}\n*Categoría:* ${classification.category}\n*Descripción:* ${classification.description}${autoNotice}\n\nRevisa tu Dashboard.`);
         }
       }
       return new Response('OK', { status: 200 })
