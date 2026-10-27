@@ -25,21 +25,28 @@ import {
   ChevronRight,
   TrendingUp
 } from 'lucide-react';
+// Función para mapear nombres antiguos de categorías a los nuevos
+const normalizeCategoryName = (category: string) => {
+  if (category === 'Servicios del Hogar') return 'Servicios';
+  if (category === 'Gustos / Antojos') return 'Gustos';
+  if (category === 'Pago de deuda') return 'Deudas';
+  if (category === 'Internet y Celular') return 'Celular';
+  return category;
+};
+
 // Colores refinados estilo Apple
 const CATEGORY_COLORS: Record<string, string> = {
   'Alquiler': '#6366f1',
   'Servicios': '#0ea5e9',
-  'Servicios del Hogar': '#0ea5e9',
-  'Internet y Celular': '#3b82f6',
+  'Celular': '#3b82f6',
   'Suscripciones': '#ec4899',
   'Mercado': '#10b981',
   'Gustos': '#f59e0b',
-  'Gustos / Antojos': '#f59e0b',
   'Transporte': '#f43f5e',
   'Cuidado personal': '#14b8a6',
   'Salud': '#ef4444',
   'Entretenimiento / Salidas': '#8b5cf6',
-  'Pago de deuda': '#64748b',
+  'Deudas': '#64748b',
   'Mascotas': '#f97316',
   'Imprevistos': '#e11d48',
   'Otros': '#94a3b8',
@@ -157,14 +164,15 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   // Datos dinámicos para el gráfico de dona y desglose porcentual
   const expenseTransactions = currentMonthTransactions.filter(t => t.type === 'expense');
   const dynamicExpensesByCategory = expenseTransactions.reduce((acc: any[], curr) => {
-    const existingCategory = acc.find(c => c.name === curr.category);
+    const displayName = normalizeCategoryName(curr.category);
+    const existingCategory = acc.find(c => c.name === displayName);
     if (existingCategory) {
       existingCategory.value += Number(curr.amount);
     } else {
       acc.push({
-        name: curr.category,
+        name: displayName,
         value: Number(curr.amount),
-        color: CATEGORY_COLORS[curr.category] || '#6366f1'
+        color: CATEGORY_COLORS[displayName] || '#6366f1'
       });
     }
     return acc;

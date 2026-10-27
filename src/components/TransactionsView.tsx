@@ -30,6 +30,14 @@ interface TransactionsViewProps {
   onOpenAllModal: () => void;
 }
 
+const normalizeCategoryName = (category: string) => {
+  if (category === 'Servicios del Hogar') return 'Servicios';
+  if (category === 'Gustos / Antojos') return 'Gustos';
+  if (category === 'Pago de deuda') return 'Deudas';
+  if (category === 'Internet y Celular') return 'Celular';
+  return category;
+};
+
 export default function TransactionsView({ transactions, onEdit, onOpenAllModal }: TransactionsViewProps) {
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
 
@@ -128,7 +136,9 @@ export default function TransactionsView({ transactions, onEdit, onOpenAllModal 
                     {getCategoryIcon(tx.category, tx.type)}
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug">{tx.category}</h4>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug">
+                      {normalizeCategoryName(tx.category)}
+                    </h4>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[170px] sm:max-w-xs">
                       {tx.description || 'Sin detalle'} • {new Date(tx.created_at).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
                     </p>

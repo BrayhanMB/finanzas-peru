@@ -18,7 +18,7 @@ interface TransactionModalProps {
 const EXPENSE_CATEGORIES = [
   'Alquiler',
   'Servicios',
-  'Internet y Celular',
+  'Celular',
   'Suscripciones',
   'Mercado',
   'Gustos',
@@ -26,7 +26,7 @@ const EXPENSE_CATEGORIES = [
   'Cuidado personal',
   'Salud',
   'Entretenimiento / Salidas',
-  'Pago de deuda',
+  'Deudas',
   'Mascotas',
   'Imprevistos',
   'Otros'
