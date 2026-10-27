@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, PieChart, Bell, Settings, LogOut, CreditCard, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, PieChart, Settings, LogOut, CreditCard, Moon, Sun } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -7,7 +7,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export type TabType = 'dashboard' | 'reportes' | 'alertas' | 'pagos';
+export type TabType = 'dashboard' | 'movimientos' | 'reportes' | 'pagos';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -40,10 +40,10 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenSettings, onLog
   };
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard },
+    { id: 'movimientos', label: 'Movimientos', icon: ArrowLeftRight },
     { id: 'reportes', label: 'Reportes', icon: PieChart },
     { id: 'pagos', label: 'Pagos', icon: CreditCard },
-    { id: 'alertas', label: 'Alertas', icon: Bell },
   ];
 
   return (

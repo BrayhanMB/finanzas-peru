@@ -4,6 +4,7 @@ import TransactionModal from './TransactionModal';
 import Sidebar, { type TabType } from './Sidebar';
 import SettingsModal from './SettingsModal';
 import AllTransactionsModal from './AllTransactionsModal';
+import TransactionsView from './TransactionsView';
 import Reports from './Reports';
 import Payments from './Payments';
 import { 
@@ -18,33 +19,29 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Plus,
-  Bell,
-  Scale,
-  PiggyBank
+  PiggyBank,
+  Wallet,
+  Eye,
+  EyeOff,
+  ChevronRight,
+  TrendingUp
 } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-// Colors for categories
+// Colores refinados estilo Apple
 const CATEGORY_COLORS: Record<string, string> = {
-  'Alquiler': '#8b5cf6', // Violet
-  'Servicios del Hogar': '#0ea5e9', // Sky
-  'Internet y Celular': '#3b82f6', // Blue
-  'Suscripciones': '#ec4899', // Pink
-  'Mercado': '#10b981', // Emerald
-  'Gustos / Antojos': '#f59e0b', // Amber
-  'Transporte': '#f43f5e', // Rose
-  'Cuidado personal': '#14b8a6', // Teal
-  'Salud': '#ef4444', // Red
-  'Entretenimiento / Salidas': '#8b5cf6', // Violet
-  'Pago de deuda': '#64748b', // Slate
-  'Mascotas': '#f97316', // Orange
-  'Imprevistos': '#ef4444', // Red
-  'Otros': '#94a3b8', // Slate light
+  'Alquiler': '#6366f1',
+  'Servicios del Hogar': '#0ea5e9',
+  'Internet y Celular': '#3b82f6',
+  'Suscripciones': '#ec4899',
+  'Mercado': '#10b981',
+  'Gustos / Antojos': '#f59e0b',
+  'Transporte': '#f43f5e',
+  'Cuidado personal': '#14b8a6',
+  'Salud': '#ef4444',
+  'Entretenimiento / Salidas': '#8b5cf6',
+  'Pago de deuda': '#64748b',
+  'Mascotas': '#f97316',
+  'Imprevistos': '#e11d48',
+  'Otros': '#94a3b8',
 };
 
 const formatCurrency = (amount: number) => {
@@ -67,6 +64,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [transactions, setTransactions] = useState<any[]>([]);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [showBalance, setShowBalance] = useState(true);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Estás seguro que deseas eliminar este movimiento?')) return;
@@ -107,7 +105,7 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
     fetchTransactions();
   }, []);
 
-  // Calculate real totals for global balance
+  // Calcular balance global real
   const initialBalance = userMetadata?.initial_balance || 0;
   
   const totalIncome = transactions
@@ -125,14 +123,14 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
   const savingsWithdrawals = transactions
     .filter(t => t.type === 'savings_withdrawal')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    
   const balanceAdjustments = transactions
     .filter(t => t.type === 'balance_adjustment')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
     
   const balance = initialBalance + totalIncome - totalExpenses - savingsDeposits + savingsWithdrawals + balanceAdjustments;
-  const currentSavings = savingsDeposits - savingsWithdrawals;
 
-  // Calculate THIS MONTH'S totals for the cards
+  // Totales de ESTE MES
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
 
@@ -149,11 +147,13 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
     .filter(t => t.type === 'expense')
     .reduce((acc, curr) => acc + Number(curr.amount), 0);
   
-  const income = monthlyIncome;
-  const expenses = monthlyExpenses;
+  const monthlySavings = currentMonthTransactions
+    .filter(t => t.type === 'savings_deposit')
+    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+
   const savingsGoal = userMetadata?.savings_goal || 5000.00;
 
-  // Generate dynamic chart data
+  // Datos dinámicos para el gráfico de dona y desglose porcentual
   const expenseTransactions = currentMonthTransactions.filter(t => t.type === 'expense');
   const dynamicExpensesByCategory = expenseTransactions.reduce((acc: any[], curr) => {
     const existingCategory = acc.find(c => c.name === curr.category);
@@ -163,16 +163,16 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
       acc.push({
         name: curr.category,
         value: Number(curr.amount),
-        color: CATEGORY_COLORS[curr.category] || '#6366f1' // Default Indigo
+        color: CATEGORY_COLORS[curr.category] || '#6366f1'
       });
     }
     return acc;
-  }, []).sort((a, b) => b.value - a.value); // Sort by highest expense
+  }, []).sort((a, b) => b.value - a.value);
 
   const hasExpenses = dynamicExpensesByCategory.length > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 font-sans flex text-slate-900 dark:text-white transition-colors">
       {/* Sidebar Navigation */}
       <Sidebar 
         activeTab={activeTab} 
@@ -184,211 +184,198 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
       {/* Main Content Area */}
       <div className="flex-1 md:ml-64 pb-28 md:pb-10 min-w-0">
         
-        {/* Header solo en mobile ya que el sidebar desktop ya tiene logo */}
-        <header className="bg-white dark:bg-slate-900 px-6 py-4 shadow-sm sticky top-0 z-10 md:hidden">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-sky-300 flex items-center justify-center shadow-sm">
-              <span className="text-xl leading-none">🐧</span>
-            </div>
-            <h1 className="font-bold text-xl text-slate-900 dark:text-white tracking-tight">Finanzas</h1>
+        {/* Header Mobile Apple Style */}
+        <header className="px-6 pt-5 pb-2 flex items-center justify-between md:hidden">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Buenos días</p>
+            <h1 className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
+              {userName.split(' ')[0]} <span className="text-xl">👋</span>
+            </h1>
           </div>
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 flex items-center justify-center shadow-sm"
+          >
+            <span className="text-lg">🐧</span>
+          </button>
         </header>
 
         {activeTab === 'dashboard' && (
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 mt-8 space-y-6">
-            <div className="mb-2">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Hola, {userName.split(' ')[0]} 👋</h2>
-              <p className="text-slate-500 dark:text-slate-400">Aquí está el resumen de tus finanzas.</p>
-            </div>
-        {/* Balance Hero Card */}
-        <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center relative overflow-hidden transition-all hover:shadow-md">
-          <div className="absolute top-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500"></div>
-          <p className="text-slate-500 dark:text-slate-400 font-medium mb-2 uppercase tracking-wider text-xs">Balance Disponible</p>
-          <h2 className="text-5xl sm:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {formatCurrency(balance)}
-          </h2>
-        </section>
-
-        {/* Summary Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Ingresos del mes</p>
-              <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <ArrowUpRight size={18} strokeWidth={2.5} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-emerald-600">{formatCurrency(income)}</p>
-          </div>
-          
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Gastos del mes</p>
-              <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
-                <ArrowDownRight size={18} strokeWidth={2.5} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-rose-600">{formatCurrency(expenses)}</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-gray-500 font-medium text-sm sm:text-base">Meta de ahorro</h3>
-              <span className="text-indigo-600 font-bold text-sm">
-                {Math.min(100, Math.round((currentSavings / savingsGoal) * 100))}%
-              </span>
-            </div>
-            <div className="mt-1">
-              <div className="flex justify-between text-xs font-medium text-slate-400 mb-2">
-                <span>{formatCurrency(currentSavings)}</span>
-                <span>{formatCurrency(savingsGoal)}</span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                <div 
-                  className="bg-indigo-500 h-2.5 rounded-full transition-all duration-1000 ease-out" 
-                  style={{ width: `${(currentSavings / savingsGoal) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Content Grid: Chart & Transactions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* Chart Section */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">Gastos por Categoría</h3>
-            <div className="h-64 w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={hasExpenses ? dynamicExpensesByCategory : [{ name: 'Sin gastos', value: 1, color: '#f1f5f9' }]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={95}
-                    paddingAngle={hasExpenses ? 5 : 0}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {(hasExpenses ? dynamicExpensesByCategory : [{ color: '#f1f5f9' }]).map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} className={hasExpenses ? "transition-all duration-300 hover:opacity-80" : ""} />
-                    ))}
-                  </Pie>
-                  {hasExpenses && (
-                    <Tooltip 
-                      formatter={(value: any) => formatCurrency(Number(value))}
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                    />
-                  )}
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Gastos</span>
-                <span className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(expenses)}</span>
-              </div>
-            </div>
+          <main className="max-w-xl mx-auto px-4 sm:px-6 mt-3 md:mt-8 space-y-6">
             
-            {hasExpenses ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-6">
-                {dynamicExpensesByCategory.map((cat: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: cat.color }}></div>
-                      <span className="text-sm text-slate-600 font-medium">{cat.name}</span>
+            {/* Saludo en Desktop */}
+            <div className="hidden md:block mb-2">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Buenos días, {userName.split(' ')[0]} 👋</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">Resumen de tus cuentas y gastos del mes.</p>
+            </div>
+
+            {/* Apartado 1: Total Balance Card (Apple Wallet Style) */}
+            <section className="bg-gradient-to-br from-indigo-50/80 via-blue-50/50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 rounded-[2rem] p-6 sm:p-7 border border-indigo-100/60 dark:border-slate-800 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Dinero</span>
+                    <button 
+                      onClick={() => setShowBalance(!showBalance)}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    >
+                      {showBalance ? <Eye size={15} /> : <EyeOff size={15} />}
+                    </button>
+                  </div>
+                  <h2 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {showBalance ? formatCurrency(balance) : 'S/ ••••••'}
+                  </h2>
+                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
+                    <TrendingUp size={14} /> Balance total disponible
+                  </p>
+                </div>
+
+                {/* Icono de contraste estilo tarjeta Apple */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/25 shrink-0">
+                  <Wallet size={32} strokeWidth={2.2} />
+                </div>
+              </div>
+            </section>
+
+            {/* Apartado 2: Resumen (Ingresos del Mes, Egresos del Mes, Ahorro del Mes) */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Resumen:</h3>
+                <button 
+                  onClick={() => setActiveTab('movimientos')}
+                  className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5"
+                >
+                  Ver movimientos <ChevronRight size={14} />
+                </button>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-3 divide-y divide-slate-100 dark:divide-slate-800/80 border border-slate-100 dark:border-slate-800/80 shadow-sm">
+                {/* Ingresos del Mes */}
+                <div className="p-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <ArrowUpRight size={22} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Ingresos del Mes</h4>
+                      <p className="text-xs text-slate-400">Total recibido</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-6 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
-                Aún no has registrado ningún gasto.
-              </div>
-            )}
-          </section>
+                  <span className="font-extrabold text-base sm:text-lg text-emerald-600 dark:text-emerald-400">
+                    +{formatCurrency(monthlyIncome)}
+                  </span>
+                </div>
 
-          {/* Transactions Section */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white">Últimos Movimientos</h3>
-              {transactions.length > 0 && (
-                <button 
-                  onClick={() => setIsAllTransactionsModalOpen(true)}
-                  className="text-indigo-600 text-sm font-semibold hover:text-indigo-700 transition-colors"
-                >
-                  Ver todos
-                </button>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {transactions.length === 0 ? (
-                <div className="text-center py-10 px-4 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-100 dark:border-slate-800 border-dashed">
-                  <div className="w-16 h-16 bg-[#25D366]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle size={32} className="text-[#25D366]" strokeWidth={2} />
+                {/* Egresos del Mes */}
+                <div className="p-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                      <ArrowDownRight size={22} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Egresos del Mes</h4>
+                      <p className="text-xs text-slate-400">Gastos realizados</p>
+                    </div>
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">¡Rompe el hielo! 🐧</h4>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-sm mx-auto">
-                    Tu cuenta está lista. Escríbele a Pingu por WhatsApp para registrar tu primer gasto o ingreso.
-                  </p>
-                  <a 
-                    href="https://wa.me/51924245759?text=¡Hola%20Pingu!%20Soy%20nuevo%20por%20aquí"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-[#25D366]/20 transition-transform hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    <MessageCircle size={20} />
-                    Abrir WhatsApp
-                  </a>
+                  <span className="font-extrabold text-base sm:text-lg text-rose-600 dark:text-rose-400">
+                    -{formatCurrency(monthlyExpenses)}
+                  </span>
+                </div>
+
+                {/* Ahorro del Mes */}
+                <div className="p-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                      <PiggyBank size={22} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Ahorro del Mes</h4>
+                      <p className="text-xs text-slate-400">Guardado en alcancía</p>
+                    </div>
+                  </div>
+                  <span className="font-extrabold text-base sm:text-lg text-indigo-600 dark:text-indigo-400">
+                    {formatCurrency(monthlySavings)}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {/* Apartado 3: Gastos por Categoría (Gráfico a la Izquierda y Categorías con % a la Derecha) */}
+            <section className="bg-white dark:bg-slate-900 rounded-[2rem] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">Gastos por Categoría</h3>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">Este Mes</span>
+              </div>
+
+              {!hasExpenses ? (
+                <div className="text-center py-12 text-slate-400 text-sm">
+                  Aún no has registrado ningún gasto en este mes.
                 </div>
               ) : (
-                transactions.slice(0, 5).map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:bg-slate-950 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center",
-                        tx.type === 'expense' ? "bg-rose-50 text-rose-600" : 
-                        tx.type === 'income' ? "bg-emerald-50 text-emerald-600" :
-                        tx.type === 'balance_adjustment' ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" :
-                        "bg-indigo-50 text-indigo-600"
-                      )}>
-                        {tx.type === 'expense' ? <ArrowDownRight size={20} /> : 
-                         tx.type === 'income' ? <ArrowUpRight size={20} /> :
-                         tx.type === 'balance_adjustment' ? <Scale size={20} /> :
-                         <PiggyBank size={20} />}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-white">{tx.category}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[150px] sm:max-w-[200px]">
-                          {tx.description}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {new Date(tx.created_at).toLocaleDateString('es-PE', { 
-                            year: 'numeric', month: 'short', day: 'numeric',
-                            hour: '2-digit', minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={cn(
-                        "font-bold text-lg",
-                        tx.type === 'expense' ? "text-slate-900 dark:text-white" : 
-                        tx.type === 'income' ? "text-emerald-600" :
-                        tx.type === 'balance_adjustment' ? "text-slate-500 dark:text-slate-400" :
-                        "text-indigo-600"
-                      )}>
-                        {tx.type === 'expense' || tx.type === 'savings_deposit' ? '-' : 
-                         tx.type === 'balance_adjustment' ? (tx.amount > 0 ? '+' : '') : '+'}{tx.type === 'balance_adjustment' ? formatCurrency(Math.abs(tx.amount)) : formatCurrency(tx.amount)}
-                      </span>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  {/* Gráfico a la izquierda */}
+                  <div className="w-44 h-44 relative shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={dynamicExpensesByCategory}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={52}
+                          outerRadius={74}
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {dynamicExpensesByCategory.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: any) => formatCurrency(Number(value))}
+                          contentStyle={{ borderRadius: '14px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Total</span>
+                      <span className="text-sm font-black text-slate-900 dark:text-white">{formatCurrency(monthlyExpenses)}</span>
                     </div>
                   </div>
-                ))
+
+                  {/* Categorías con porcentaje a la derecha */}
+                  <div className="flex-1 w-full space-y-2.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                    {dynamicExpensesByCategory.map((cat: any, i: number) => {
+                      const percentage = monthlyExpenses > 0 ? Math.round((cat.value / monthlyExpenses) * 100) : 0;
+                      return (
+                        <div key={i} className="flex items-center justify-between text-xs sm:text-sm">
+                          <div className="flex items-center gap-2 truncate max-w-[150px]">
+                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }}></div>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">{cat.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 font-medium">{formatCurrency(cat.value)}</span>
+                            <span className="font-bold text-slate-900 dark:text-white w-9 text-right">{percentage}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
-            </div>
-          </section>
-        </div>
+            </section>
+
           </main>
+        )}
+
+        {/* Pestaña Movimientos (Nuevo Menú) */}
+        {activeTab === 'movimientos' && (
+          <TransactionsView 
+            transactions={transactions}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onOpenAllModal={() => setIsAllTransactionsModalOpen(true)}
+          />
         )}
 
         {activeTab === 'reportes' && (
@@ -404,21 +391,10 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
           <Payments />
         )}
 
-        {activeTab === 'alertas' && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-16 text-center">
-            <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
-              <Bell size={40} strokeWidth={2} />
-            </div>
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Centro de Alertas</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-lg">Aquí recibirás notificaciones cuando estés cerca de sobrepasar tu presupuesto. ¡Próximamente!</p>
-          </div>
-        )}
-
         {/* Floating Action Buttons */}
         <div className="fixed bottom-24 md:bottom-6 right-6 z-20 flex flex-col md:flex-row gap-4 items-end md:items-center">
           
           <div className="relative group flex items-center">
-            {/* Tooltip (oculto en móviles, visible en hover en desktop) */}
             <div className="absolute right-full mr-4 px-4 py-2 bg-slate-800 text-white text-xs font-medium rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl hidden md:block">
               Escríbele a Pingu por WhatsApp e ingresa todo desde ahí
               <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 border-4 border-transparent border-l-slate-800"></div>
@@ -448,31 +424,26 @@ export default function Dashboard({ userName, userMetadata, onLogout }: Dashboar
 
       <TransactionModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTransaction(null);
+        }}
         onSuccess={() => {
           setIsModalOpen(false);
+          setEditingTransaction(null);
           fetchTransactions();
         }}
+        initialData={editingTransaction}
       />
 
       <SettingsModal 
         isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() => setIsSettingsOpen(false)} 
         userMetadata={userMetadata}
         onSuccess={() => {
           setIsSettingsOpen(false);
           window.location.reload();
         }}
-      />
-
-      <TransactionModal 
-        isOpen={isModalOpen} 
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingTransaction(null);
-        }}
-        onSuccess={fetchTransactions}
-        initialData={editingTransaction}
       />
       
       <AllTransactionsModal
